@@ -1,7 +1,7 @@
 # The Acity Oracle – Architecture Documentation (Part F)
 
 **Author:** Michael Nana Kwame Osei-Dei (10022300168)  
-**Course:** CS4241 – Introduction to Artificial Intelligence (2026)
+**Course:** IT3241 – Introduction to Artificial Intelligence (2026)
 
 ---
 

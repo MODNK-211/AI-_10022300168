@@ -14,7 +14,7 @@ Run locally:
     streamlit run app.py
 
 Author : Michael Nana Kwame Osei-Dei  (10022300168)
-Course : CS4241 – Introduction to Artificial Intelligence (2026)
+Course : IT3241 – Introduction to Artificial Intelligence (2026)
 """
 
 import os
@@ -26,7 +26,15 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 # ── Ensure src/ is importable as a package ───────────────────────────────────
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_APP_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, _APP_DIR)
+
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(os.path.join(_APP_DIR, ".env"))
+except ImportError:
+    pass
 
 logging.basicConfig(
     level=logging.INFO,
@@ -39,42 +47,418 @@ from src.feedback import FeedbackStore # noqa: E402
 
 def render_arena_widget() -> None:
     """
-    Render an SVG-based academic animation banner.
-    Theme: floating books, orbiting orbs, and a wise oracle character.
+    Render an enhanced SVG-based academic animation banner.
+    Theme: Matrix Rain (gold + green), holographic Ghanaian figure, 
+    floating data cards, lightbulb pulses, and data stream animations.
     """
-    modern_html = textwrap.dedent(
-        """
+    modern_html = textwrap.dedent("""
         <!doctype html>
         <html>
         <head>
           <meta charset="utf-8"/>
           <style>
-            body { margin:0; padding:0; background:transparent; font-family:sans-serif; }
-            .wrap { width:100%; max-width:1150px; margin:0 auto; position:relative; }
+            body { margin:0; padding:0; background:transparent; font-family:sans-serif; overflow:hidden; }
+            .wrap { width:100%; max-width:1150px; margin:0 auto; position:relative; perspective:1200px; }
             .box {
-              width:100%; aspect-ratio:1100/420; border-radius:16px; overflow:hidden;
-              border:1px solid #d4deea; background:#f5f8fc;
-              box-shadow: inset 0 0 0 1px rgba(255,255,255,.5), 0 2px 12px rgba(35,52,70,.08);
+              width:100%; aspect-ratio:1100/480; border-radius:16px; overflow:hidden;
+              border:1px solid #1a4d2e; background:linear-gradient(180deg, #0a1a12 0%, #0d2818 50%, #06140c 100%);
+              box-shadow: 0 0 40px rgba(0,200,120,0.15), inset 0 0 80px rgba(0,0,0,0.5);
             }
-            svg { width:100%; height:100%; display:block; }
+            svg { width:100%; height:100%; display:block; transform-style:preserve-3d; }
             .hud {
-              position:absolute; right:14px; top:10px; background:rgba(255,255,255,.82);
-              border:1px solid #d2dce9; border-radius:10px; padding:6px 8px; font-size:12px; color:#455a70;
+              position:absolute; right:14px; top:10px; background:rgba(0,40,20,0.85);
+              border:1px solid #00ff88; border-radius:10px; padding:6px 12px; font-size:12px; 
+              color:#00ff88; font-family:'Courier New',monospace; text-shadow:0 0 8px #00ff88;
             }
+            canvas#matrix { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; opacity:0.35; }
           </style>
         </head>
         <body>
           <div class="wrap">
-            <div class="box">
-              <svg id="arena" viewBox="0 0 1100 420" preserveAspectRatio="xMidYMid meet">
+            <div class="box" id="box">
+              <canvas id="matrix" width="1100" height="480"></canvas>
+              <svg id="arena" viewBox="0 0 1100 480" preserveAspectRatio="xMidYMid meet">
                 <defs>
-                  <linearGradient id="bgGrad" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stop-color="#f9fcff"/>
-                    <stop offset="100%" stop-color="#edf3fa"/>
+                  <linearGradient id="holoGrad" x1="0" x2="1" y1="0" y2="1">
+                    <stop offset="0%" stop-color="#00ff88" stop-opacity="0.9"/>
+                    <stop offset="50%" stop-color="#00ccff" stop-opacity="0.7"/>
+                    <stop offset="100%" stop-color="#ffdd00" stop-opacity="0.8"/>
                   </linearGradient>
-                  <radialGradient id="orbGlow" cx="50%" cy="50%" r="50%">
+                  <linearGradient id="goldGrad" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stop-color="#ffd700"/>
+                    <stop offset="100%" stop-color="#b8860b"/>
+                  </linearGradient>
+                  <radialGradient id="holoGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#00ff88" stop-opacity="0.8"/>
+                    <stop offset="60%" stop-color="#00ccff" stop-opacity="0.3"/>
+                    <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+                  </radialGradient>
+                  <radialGradient id="energyRing" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#ffdd00" stop-opacity="0.9"/>
+                    <stop offset="100%" stop-color="#ff8800" stop-opacity="0"/>
+                  </radialGradient>
+                  <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                  <filter id="holoGlowFilter">
+                    <feGaussianBlur stdDeviation="4" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                </defs>
+                <rect x="0" y="0" width="1100" height="480" fill="transparent"/>
+                <g id="layerBg"></g>
+                <g id="layerDataCards"></g>
+                <g id="layerCharacter"></g>
+                <g id="layerEnergy"></g>
+                <g id="layerDataStream"></g>
+                <g id="layerFx"></g>
+              </svg>
+            </div>
+            <div id="hud" class="hud">Mode: Idle | Data: 0%</div>
+          </div>
+          <script>
+            const NS = "http://www.w3.org/2000/svg";
+            const W = 1100, H = 480, TAU = Math.PI * 2;
+            const box = document.getElementById("box");
+            const canvas = document.getElementById("matrix");
+            const ctx = canvas.getContext("2d");
+            const bgLayer = document.getElementById("layerBg");
+            const dataCardsLayer = document.getElementById("layerDataCards");
+            const charLayer = document.getElementById("layerCharacter");
+            const energyLayer = document.getElementById("layerEnergy");
+            const dataStreamLayer = document.getElementById("layerDataStream");
+            const fxLayer = document.getElementById("layerFx");
+            const hud = document.getElementById("hud");
+
+            // Matrix Rain Setup
+            const matrixChars = "アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const goldChars = "₵GHANAオアシタナハマヤラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプ";
+            const fontSize = 16;
+            const columns = Math.floor(W / fontSize);
+            const drops = Array(columns).fill(1);
+            const dropsGold = Array(Math.floor(columns/3)).fill(1);
+
+            function drawMatrix() {
+              ctx.fillStyle = "rgba(10, 26, 18, 0.08)";
+              ctx.fillRect(0, 0, W, H);
+              const speed = window.isThinking ? 1.5 : (window.isTyping ? 1.2 : 1.0);
+              
+              for (let i = 0; i < drops.length; i++) {
+                if (Math.random() > 0.97) {
+                  const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                  ctx.fillStyle = `rgba(0, ${Math.floor(180 + Math.random() * 75)}, ${Math.floor(100 + Math.random() * 56)}, ${0.4 + Math.random() * 0.4})`;
+                  ctx.font = fontSize + "px monospace";
+                  ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+                  if (drops[i] * fontSize > H && Math.random() > 0.975) drops[i] = 0;
+                  drops[i] += speed;
+                }
+              }
+              
+              for (let i = 0; i < dropsGold.length; i++) {
+                if (Math.random() > 0.985) {
+                  const char = goldChars[Math.floor(Math.random() * goldChars.length)];
+                  ctx.fillStyle = `rgba(255, ${Math.floor(180 + Math.random() * 75)}, 0, ${0.5 + Math.random() * 0.3})`;
+                  ctx.font = (fontSize + 4) + "px monospace";
+                  ctx.fillText(char, i * fontSize * 3, dropsGold[i] * fontSize);
+                  if (dropsGold[i] * fontSize > H && Math.random() > 0.98) dropsGold[i] = 0;
+                  dropsGold[i] += speed * 0.8;
+                }
+              }
+            }
+
+            const rand = (a, b) => a + Math.random() * (b - a);
+            const el = (t, a = {}) => {
+              const n = document.createElementNS(NS, t);
+              for (const [k, v] of Object.entries(a)) n.setAttribute(k, v);
+              return n;
+            };
+
+            // Background grid
+            for (let x = 0; x <= W; x += 40) bgLayer.appendChild(el("line", {x1:x, y1:0, x2:x, y2:H, stroke:"#00ff88", "stroke-opacity":"0.08", "stroke-width":"1"}));
+            for (let y = 0; y <= H; y += 40) bgLayer.appendChild(el("line", {x1:0, y1:y, x2:W, y2:y, stroke:"#00ff88", "stroke-opacity":"0.08", "stroke-width":"1"}));
+
+            // Ghana subtle outline
+            const ghanaPath = el("path", {
+              d: "M280 120 L310 110 L350 118 L390 105 L430 125 L450 150 L480 170 L475 200 L495 230 L465 255 L435 268 L400 300 L360 310 L310 290 L280 295 L250 275 L230 245 L210 218 L225 190 L215 155 L235 128 Z",
+              fill: "none", stroke: "#00ff88", "stroke-opacity": "0.15", "stroke-width": "1.5", "stroke-dasharray": "4 4"
+            });
+            bgLayer.appendChild(ghanaPath);
+
+            // Holographic Ghanaian Character
+            const holoCenterX = 550, holoCenterY = 240;
+            
+            // Holographic base glow
+            const holoBase = el("ellipse", {cx: holoCenterX, cy: 380, rx: 80, ry: 20, fill: "url(#holoGlow)", opacity: 0.6, filter: "url(#holoGlowFilter)"});
+            
+            // Character body (holographic style)
+            const bodyGlow = el("ellipse", {cx: holoCenterX, cy: holoCenterY, rx: 70, ry: 90, fill: "url(#holoGrad)", opacity: 0.25, filter: "url(#holoGlowFilter)"});
+            
+            // Robe (kente-inspired pattern)
+            const robe = el("path", {
+              fill: "none", stroke: "url(#holoGrad)", "stroke-width": "3", opacity: 0.9,
+              d: `M${holoCenterX-45} ${holoCenterY+50} Q${holoCenterX} ${holoCenterY+120} ${holoCenterX+45} ${holoCenterY+50}`
+            });
+            
+            // Head
+            const headGlow = el("circle", {cx: holoCenterX, cy: holoCenterY-45, r: 35, fill: "url(#holoGrad)", opacity: 0.3, filter: "url(#holoGlowFilter)"});
+            const head = el("circle", {cx: holoCenterX, cy: holoCenterY-45, r: 22, fill: "none", stroke: "#00ff88", "stroke-width": 2, opacity: 0.85});
+            
+            // Eyes (holographic)
+            const eyeL = el("ellipse", {cx: holoCenterX-8, cy: holoCenterY-48, rx: 4, ry: 2, fill: "#00ff88", opacity: 0.9});
+            const eyeR = el("ellipse", {cx: holoCenterX+8, cy: holoCenterY-48, rx: 4, ry: 2, fill: "#00ff88", opacity: 0.9});
+            
+            // Crown (Adinkra-inspired)
+            const crown = el("path", {
+              fill: "none", stroke: "#ffd700", "stroke-width": 2, opacity: 0.9,
+              d: `M${holoCenterX-25} ${holoCenterY-70} L${holoCenterX} ${holoCenterY-85} L${holoCenterX+25} ${holoCenterY-70}`
+            });
+            
+            // Arms (holographic lines)
+            const leftArm = el("line", {x1: holoCenterX-30, y1: holoCenterY, x2: holoCenterX-60, y2: holoCenterY+30, stroke: "#00ccff", "stroke-width": 2, opacity: 0.7});
+            const rightArm = el("line", {x1: holoCenterX+30, y1: holoCenterY, x2: holoCenterX+60, y2: holoCenterY+30, stroke: "#00ccff", "stroke-width": 2, opacity: 0.7});
+            
+            // Data orbs around character
+            const orbs = [];
+            for (let i = 0; i < 6; i++) {
+              const orb = el("circle", {r: rand(4, 8), fill: i % 2 === 0 ? "#00ff88" : "#ffd700", opacity: 0.7, filter: "url(#glow)"});
+              dataCardsLayer.appendChild(orb);
+              orbs.push({el: orb, angle: rand(0, TAU), radius: rand(60, 100), speed: rand(0.3, 0.8)});
+            }
+
+            // Floating holographic data cards
+            const dataCards = [];
+            const cardLabels = ["GHANA", "VOTE", "DATA", "2024", "REGION", "RESULT"];
+            for (let i = 0; i < 5; i++) {
+              const cardGroup = el("g", {filter: "url(#holoGlowFilter)"});
+              const card = el("rect", {x: -35, y: -20, width: 70, height: 40, rx: 4, fill: "rgba(0,40,20,0.7)", stroke: "#00ff88", "stroke-width": 1, opacity: 0.8});
+              const label = el("text", {x: 0, y: 5, fill: "#00ff88", "font-size": "10", "text-anchor": "middle", "font-family": "monospace"});
+              label.textContent = cardLabels[i];
+              cardGroup.appendChild(card);
+              cardGroup.appendChild(label);
+              dataCardsLayer.appendChild(cardGroup);
+              dataCards.push({
+                g: cardGroup, 
+                bx: rand(150, 950), 
+                by: rand(80, 350), 
+                amp: rand(8, 25), 
+                ph: rand(0, TAU), 
+                orbit: rand(0.2, 0.6),
+                orbitRadius: rand(30, 60)
+              });
+            }
+
+            // Data flow lines
+            const dataLines = [];
+            for (let i = 0; i < 8; i++) {
+              const line = el("path", {
+                fill: "none", stroke: i % 2 === 0 ? "#00ff88" : "#ffd700",
+                "stroke-width": 1, opacity: 0.4, "stroke-dasharray": "3 6"
+              });
+              dataCardsLayer.appendChild(line);
+              dataLines.push({el: line, offset: rand(0, 100), speed: rand(0.5, 1.5)});
+            }
+
+            // Lightbulb (thinking state)
+            const lightbulb = el("g", {opacity: 0});
+            const bulb = el("path", {
+              fill: "#ffd700", opacity: 0.9,
+              d: "M0,-20 C-12,-20 -18,-10 -18,0 C-18,12 -10,20 0,20 C10,20 18,12 18,0 C18,-10 12,-20 0,-20"
+            });
+            const bulbBase = el("rect", {x: -6, y: 20, width: 12, height: 6, fill: "#888"});
+            const bulbGlow = el("circle", {cx: 0, cy: 0, r: 30, fill: "url(#energyRing)", opacity: 0.5});
+            lightbulb.appendChild(bulbGlow);
+            lightbulb.appendChild(bulb);
+            lightbulb.appendChild(bulbBase);
+            energyLayer.appendChild(lightbulb);
+
+            // Energy rings (thinking state)
+            const energyRings = [];
+            for (let i = 0; i < 3; i++) {
+              const ring = el("circle", {cx: holoCenterX, cy: holoCenterY-20, r: 40 + i * 25, fill: "none", stroke: "#ffd700", "stroke-width": 2, opacity: 0, "stroke-dasharray": "20 10"});
+              energyLayer.appendChild(ring);
+              energyRings.push({el: ring, baseR: 40 + i * 25, phase: i * 2});
+            }
+
+            charLayer.append(holoBase, bodyGlow, robe, headGlow, head, eyeL, eyeR, crown, leftArm, rightArm);
+
+            // State management
+            window.isTyping = false;
+            window.isThinking = false;
+            window.isResponding = false;
+            
+            const mode = () => window.isResponding ? "Responding" : window.isThinking ? "Thinking" : window.isTyping ? "Typing" : "Idle";
+            
+            window.setFight = () => { 
+              window.isTyping = false; 
+              window.isThinking = false; 
+              window.isResponding = false; 
+            };
+            
+            window.setTyping = () => { 
+              window.isTyping = true; 
+              window.isThinking = false; 
+              window.isResponding = false; 
+            };
+            
+            window.setThinking = (ms = 2600) => {
+              window.isTyping = false; 
+              window.isThinking = true; 
+              window.isResponding = false;
+              clearTimeout(window.__t);
+              window.__t = setTimeout(() => window.setFight(), ms);
+            };
+            
+            window.setResponding = (ms = 3000) => {
+              window.isTyping = false; 
+              window.isThinking = false; 
+              window.isResponding = true;
+              clearTimeout(window.__r);
+              window.__r = setTimeout(() => window.setFight(), ms);
+            };
+
+            // Bind to parent Streamlit
+            function bindParent() {
+              try {
+                const d = window.parent.document;
+                d.addEventListener("input", (e) => {
+                  const t = e.target;
+                  if (t && (t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type === "text"))) {
+                    const has = !!(t.value && t.value.trim().length);
+                    if (has) window.setTyping();
+                    else if (!window.isThinking && !window.isResponding) window.setFight();
+                  }
+                }, true);
+                d.addEventListener("keydown", (e) => {
+                  const t = e.target;
+                  if (t && (t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type === "text"))) {
+                    if (e.key === "Enter" && !e.shiftKey) window.setThinking(2600);
+                  }
+                }, true);
+                d.addEventListener("click", (e) => {
+                  const b = e.target.closest("button");
+                  if (!b) return;
+                  const txt = (b.innerText || b.textContent || "").toLowerCase();
+                  if (txt.includes("submit") || txt.includes("ask") || txt.includes("send")) {
+                    window.setResponding(3000);
+                  }
+                }, true);
+              } catch (_) {}
+            }
+            bindParent();
+
+            // Animation loop
+            let last = performance.now();
+            function frame(now) {
+              const t = now / 1000;
+              const dt = Math.min(0.05, (now - last) / 1000);
+              last = now;
+              const m = mode();
+
+              // Draw Matrix rain
+              drawMatrix();
+
+              // Animate orbs
+              const orbSpeed = window.isThinking ? 2.5 : (window.isTyping ? 1.5 : 1.0);
+              for (const o of orbs) {
+                o.angle += o.speed * dt * orbSpeed;
+                const x = holoCenterX + Math.cos(o.angle) * o.radius;
+                const y = holoCenterY + Math.sin(o.angle) * (o.radius * 0.5) - 20;
+                o.el.setAttribute("cx", x);
+                o.el.setAttribute("cy", y);
+                o.el.setAttribute("opacity", 0.5 + Math.sin(t * 3 + o.angle) * 0.3);
+              }
+
+              // Animate data cards
+              const cardSpeed = window.isThinking ? 1.8 : (window.isTyping ? 1.3 : 1.0);
+              for (const c of dataCards) {
+                const y = c.by + Math.sin(t * c.orbit * cardSpeed + c.ph) * c.amp;
+                const x = c.bx + Math.cos(t * c.orbit * 0.5 + c.ph) * c.orbitRadius;
+                c.g.setAttribute("transform", `translate(${x}, ${y}) rotate(${Math.sin(t + c.ph) * 5})`);
+              }
+
+              // Animate data flow lines
+              for (const dl of dataLines) {
+                const offset = (t * dl.speed * 20 + dl.offset) % 100;
+                dl.el.setAttribute("stroke-dashoffset", offset);
+                const pathD = `M${holoCenterX + 60} ${holoCenterY} Q${holoCenterX + 150} ${holoCenterY - 50 + Math.sin(t + dl.offset) * 30} ${holoCenterX + 250} ${holoCenterY + Math.sin(t * 2 + dl.offset) * 20}`;
+                dl.el.setAttribute("d", pathD);
+              }
+
+              // Character animation
+              const charPulse = window.isThinking ? 1.15 : (window.isTyping ? 1.05 : 1.0);
+              bodyGlow.setAttribute("opacity", 0.2 + Math.sin(t * 2) * 0.1);
+              headGlow.setAttribute("opacity", 0.25 + Math.sin(t * 2.5) * 0.1);
+              
+              // Eye flicker
+              const eyeFlicker = window.isThinking ? 0.6 + Math.sin(t * 8) * 0.4 : 0.9;
+              eyeL.setAttribute("opacity", eyeFlicker);
+              eyeR.setAttribute("opacity", eyeFlicker);
+
+              // Lightbulb (thinking state)
+              if (window.isThinking) {
+                lightbulb.setAttribute("opacity", 1);
+                lightbulb.setAttribute("transform", `translate(${holoCenterX + 80}, ${holoCenterY - 80})`);
+                const bulbScale = 0.8 + Math.sin(t * 6) * 0.2;
+                bulb.setAttribute("transform", `scale(${bulbScale})`);
+                bulbGlow.setAttribute("opacity", 0.4 + Math.sin(t * 4) * 0.3);
+                
+                // Energy rings
+                for (const ring of energyRings) {
+                  ring.el.setAttribute("opacity", 0.5 + Math.sin(t * 3 + ring.phase) * 0.3);
+                  const ringScale = 1 + Math.sin(t * 2 + ring.phase) * 0.15;
+                  ring.el.setAttribute("r", ring.baseR * ringScale);
+                  ring.el.setAttribute("transform", `rotate(${t * 30 + ring.phase * 60} ${holoCenterX} ${holoCenterY-20})`);
+                }
+              } else {
+                lightbulb.setAttribute("opacity", 0);
+                for (const ring of energyRings) {
+                  ring.el.setAttribute("opacity", 0);
+                }
+              }
+
+              // Data stream (responding state)
+              if (window.isResponding) {
+                if (Math.random() < 0.15) {
+                  const particle = el("circle", {r: rand(2, 5), fill: ["#00ff88", "#ffd700", "#00ccff"][Math.floor(Math.random()*3)], opacity: 0.9});
+                  particle.setAttribute("cx", holoCenterX + 30);
+                  particle.setAttribute("cy", holoCenterY);
+                  dataStreamLayer.appendChild(particle);
+                  
+                  const targetX = rand(400, 700);
+                  const targetY = rand(300, 400);
+                  const startTime = now;
+                  const duration = 1500;
+                  
+                  const animateParticle = () => {
+                    const elapsed = performance.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const ease = progress * (2 - progress);
+                    const px = holoCenterX + 30 + (targetX - holoCenterX - 30) * ease;
+                    const py = holoCenterY + (targetY - holoCenterY) * ease + Math.sin(progress * Math.PI) * 30;
+                    particle.setAttribute("cx", px);
+                    particle.setAttribute("cy", py);
+                    particle.setAttribute("opacity", 0.9 * (1 - progress));
+                    
+                    if (progress < 1) requestAnimationFrame(animateParticle);
+                    else particle.remove();
+                  };
+                  requestAnimationFrame(animateParticle);
+                }
+              }
+
+              // Update HUD
+              const dataLevel = window.isResponding ? Math.floor(70 + Math.sin(t * 5) * 30) : (window.isThinking ? Math.floor(40 + Math.sin(t * 3) * 20) : Math.floor(Math.sin(t) * 10 + 10));
+              hud.textContent = `Mode: ${m} | Data: ${dataLevel}%`;
+              
+              requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+          </script>
+        </body>
+        </html>
                     <stop offset="0%" stop-color="#a9d8ff" stop-opacity="0.95"/>
-                    <stop offset="100%" stop-color="#7ab8f5" stop-opacity="0.15"/>
+                    <stop offset="100%" stop-color="#7ab8f5" stop-opacity="0.12"/>
                   </radialGradient>
                   <radialGradient id="capGlow" cx="50%" cy="50%" r="50%">
                     <stop offset="0%" stop-color="#ffe082" stop-opacity="0.95"/>
@@ -82,63 +466,217 @@ def render_arena_widget() -> None:
                   </radialGradient>
                 </defs>
                 <rect x="0" y="0" width="1100" height="420" fill="url(#bgGrad)"/>
-                <g id="bg"></g><g id="books"></g><g id="orbs"></g><g id="oracle"></g><g id="fx"></g>
+                <g id="layerSky"></g>
+                <g id="layerMap"></g>
+                <g id="layerMid"></g>
+                <g id="layerFloat"></g>
+                <g id="layerCharacter"></g>
+                <g id="layerFx"></g>
               </svg>
             </div>
-            <div id="hud" class="hud">Mode: Idle</div>
+            <div id="hud" class="hud">Mode: Idle | Depth: 0</div>
           </div>
           <script>
-            const NS="http://www.w3.org/2000/svg", W=1100, H=420, G=322, TAU=Math.PI*2;
-            const bg=document.getElementById("bg"), books=document.getElementById("books"), orbs=document.getElementById("orbs"), oracle=document.getElementById("oracle"), fx=document.getElementById("fx"), hud=document.getElementById("hud");
-            const rand=(a,b)=>a+Math.random()*(b-a), el=(t,a={})=>{const n=document.createElementNS(NS,t); for(const [k,v] of Object.entries(a)) n.setAttribute(k,v); return n;};
+            const NS = "http://www.w3.org/2000/svg";
+            const W = 1100, H = 420, TAU = Math.PI * 2;
+            const box = document.getElementById("box");
+            const sky = document.getElementById("layerSky");
+            const mapLayer = document.getElementById("layerMap");
+            const mid = document.getElementById("layerMid");
+            const floatLayer = document.getElementById("layerFloat");
+            const charLayer = document.getElementById("layerCharacter");
+            const fx = document.getElementById("layerFx");
+            const hud = document.getElementById("hud");
 
-            for(let x=0;x<=W;x+=36) bg.appendChild(el("line",{x1:x,y1:0,x2:x,y2:H,stroke:"#c8d4e1","stroke-opacity":"0.10","stroke-width":"1"}));
-            for(let y=0;y<=H;y+=28) bg.appendChild(el("line",{x1:0,y1:y,x2:W,y2:y,stroke:"#c8d4e1","stroke-opacity":"0.10","stroke-width":"1"}));
-            bg.appendChild(el("rect",{x:0,y:0,width:W,height:14,fill:"#ce1126","fill-opacity":"0.07"}));
-            bg.appendChild(el("rect",{x:0,y:14,width:W,height:9,fill:"#fcd116","fill-opacity":"0.07"}));
-            bg.appendChild(el("rect",{x:0,y:23,width:W,height:12,fill:"#006b3f","fill-opacity":"0.07"}));
-            bg.appendChild(el("rect",{x:0,y:G,width:W,height:H-G,fill:"#dce6f2"}));
+            const rand = (a, b) => a + Math.random() * (b - a);
+            const el = (t, a = {}) => {
+              const n = document.createElementNS(NS, t);
+              for (const [k, v] of Object.entries(a)) n.setAttribute(k, v);
+              return n;
+            };
 
-            window.isTyping=false; window.isThinking=false; window.isClapping=false;
-            const mode=()=>window.isClapping?"Celebrating":window.isThinking?"Thinking":window.isTyping?"Typing":"Idle";
-            window.setFight=()=>{window.isTyping=false;window.isThinking=false;window.isClapping=false;};
-            window.setTyping=()=>{window.isTyping=true;window.isThinking=false;window.isClapping=false;};
-            window.setThinking=(ms=2600)=>{window.isTyping=false;window.isThinking=true;window.isClapping=false;clearTimeout(window.__t);window.__t=setTimeout(()=>window.setFight(),ms);};
-            window.setClapping=(ms=2000)=>{window.isTyping=false;window.isThinking=false;window.isClapping=true;clearTimeout(window.__c);window.__c=setTimeout(()=>window.setFight(),ms);};
+            // Base layers
+            for (let x = 0; x <= W; x += 36) sky.appendChild(el("line", {x1:x, y1:0, x2:x, y2:H, stroke:"#c8d4e1", "stroke-opacity":"0.10", "stroke-width":"1"}));
+            for (let y = 0; y <= H; y += 28) sky.appendChild(el("line", {x1:0, y1:y, x2:W, y2:y, stroke:"#c8d4e1", "stroke-opacity":"0.10", "stroke-width":"1"}));
+            sky.appendChild(el("rect", {x:0, y:0, width:W, height:14, fill:"#ce1126", "fill-opacity":"0.07"}));
+            sky.appendChild(el("rect", {x:0, y:14, width:W, height:9, fill:"#fcd116", "fill-opacity":"0.07"}));
+            sky.appendChild(el("rect", {x:0, y:23, width:W, height:12, fill:"#006b3f", "fill-opacity":"0.07"}));
+            mid.appendChild(el("rect", {x:0, y:322, width:W, height:H - 322, fill:"#dce6f2"}));
 
-            const fb=[]; const bcols=["#5e81ac","#6f9dd3","#7aa2d8"];
-            for(let i=0;i<7;i++){ const g=el("g"),w=rand(42,62),h=rand(14,20); g.appendChild(el("rect",{x:-w/2,y:-h/2,width:w,height:h,rx:3,fill:bcols[i%3],opacity:.92})); g.appendChild(el("line",{x1:-w/2+6,y1:0,x2:w/2-6,y2:0,stroke:"#e8f1ff","stroke-width":"1.3"})); books.appendChild(g); fb.push({g,bx:rand(90,530),by:rand(95,280),amp:rand(7,20),ph:rand(0,TAU),dr:rand(.3,.9)}); }
-            const oc={x:760,y:180}, orb=[];
-            for(let i=0;i<8;i++){ const o=el("circle",{r:rand(10,17),fill:"url(#orbGlow)"}), c=el("circle",{r:2.2,fill:"#dff2ff",opacity:.95}); orbs.appendChild(o); orbs.appendChild(c); orb.push({o,c,r:50+i*12,s:.35+i*.06,p:rand(0,TAU)}); }
+            // Ghana map silhouette (stylized polygon)
+            const ghana = el("path", {
+              d: "M320 110 L350 102 L386 110 L420 100 L458 118 L470 138 L500 156 L494 185 L512 214 L482 236 L454 246 L428 276 L394 286 L350 270 L318 272 L286 254 L268 228 L246 204 L260 182 L252 150 L270 126 Z",
+              fill: "#1f4f7a",
+              "fill-opacity": "0.20",
+              stroke: "#1d466d",
+              "stroke-opacity": "0.35",
+              "stroke-width": "2"
+            });
+            mapLayer.appendChild(ghana);
+            mapLayer.appendChild(el("text", {
+              x: 350, y: 306, fill: "#325f84", "font-size": "18", "font-weight": "600", "letter-spacing": "1"
+            })).textContent = "GHANA";
 
-            const aura=el("circle",{cx:760,cy:142,r:64,fill:"url(#capGlow)",opacity:.55}), robe=el("path",{fill:"#335c88",d:"M720 312 L800 312 L832 366 L688 366 Z"}), neck=el("rect",{x:750,y:236,width:20,height:12,fill:"#f3c9a8"});
-            const head=el("circle",{cx:760,cy:220,r:22,fill:"#f3c9a8"}), eyeL=el("circle",{cx:752,cy:218,r:1.8,fill:"#2f3e52"}), eyeR=el("circle",{cx:768,cy:218,r:1.8,fill:"#2f3e52"}), mouth=el("path",{d:"M752 227 Q760 232 768 227",fill:"none",stroke:"#946d57","stroke-width":"1.4"});
-            const cap=el("path",{fill:"#284f7a",d:"M732 202 L788 202 L760 186 Z"}), capBand=el("rect",{x:740,y:201,width:40,height:6,fill:"#223f62"}), tassel=el("line",{x1:786,y1:202,x2:796,y2:220,stroke:"#ffd54f","stroke-width":"2"});
-            const leftArm=el("path",{fill:"none",stroke:"#335c88","stroke-width":"8","stroke-linecap":"round"}), rightArm=el("path",{fill:"none",stroke:"#335c88","stroke-width":"8","stroke-linecap":"round"});
-            const bookBack=el("rect",{x:708,y:286,width:104,height:58,rx:5,fill:"#6f9dd3"}), bookFront=el("path",{fill:"#8cb6e6"}), page1=el("line",{x1:722,y1:304,x2:798,y2:304,stroke:"#e9f2ff","stroke-width":"1.5"}), page2=el("line",{x1:722,y1:318,x2:798,y2:318,stroke:"#e9f2ff","stroke-width":"1.5"});
-            oracle.append(aura,robe,neck,head,eyeL,eyeR,mouth,cap,capBand,tassel,leftArm,rightArm,bookBack,bookFront,page1,page2);
+            // Floating books + orbs
+            const books = [];
+            for (let i = 0; i < 7; i++) {
+              const g = el("g");
+              const w = rand(42, 62), h = rand(14, 20);
+              g.appendChild(el("rect", {x:-w/2, y:-h/2, width:w, height:h, rx:3, fill:["#5e81ac","#6f9dd3","#7aa2d8"][i%3], opacity:.92}));
+              g.appendChild(el("line", {x1:-w/2+6, y1:0, x2:w/2-6, y2:0, stroke:"#e8f1ff", "stroke-width":"1.3"}));
+              floatLayer.appendChild(g);
+              books.push({g, bx:rand(90,530), by:rand(95,280), amp:rand(7,20), ph:rand(0,TAU), dr:rand(.3,.9)});
+            }
+            const oc = {x:760, y:180}, orbs = [];
+            for (let i = 0; i < 8; i++) {
+              const o = el("circle", {r:rand(10,17), fill:"url(#orbGlow)"});
+              const c = el("circle", {r:2.2, fill:"#dff2ff", opacity:.95});
+              floatLayer.appendChild(o); floatLayer.appendChild(c);
+              orbs.push({o, c, r:50 + i*12, s:.35 + i*.06, p:rand(0,TAU)});
+            }
 
-            function thinkingDots(t){ fx.innerHTML=""; const g=el("g"),x=620,y=85,p=(Math.sin(t*4)+1)*.5; g.append(el("circle",{cx:x,cy:y,r:13,fill:"#fff",opacity:.92}),el("circle",{cx:x+21,cy:y-9,r:8,fill:"#fff",opacity:.92}),el("circle",{cx:x+34,cy:y-15,r:5.5,fill:"#fff",opacity:.92}),el("circle",{cx:x-4,cy:y,r:2+p*.4,fill:"#7f8c8d"}),el("circle",{cx:x+3,cy:y,r:2+p*.4,fill:"#7f8c8d"}),el("circle",{cx:x+10,cy:y,r:2+p*.4,fill:"#7f8c8d"})); fx.appendChild(g); }
+            // Foreground character (oracle)
+            const aura = el("circle",{cx:760, cy:142, r:64, fill:"url(#capGlow)", opacity:.55});
+            const robe = el("path",{fill:"#335c88", d:"M720 312 L800 312 L832 366 L688 366 Z"});
+            const neck = el("rect",{x:750, y:236, width:20, height:12, fill:"#f3c9a8"});
+            const head = el("circle",{cx:760, cy:220, r:22, fill:"#f3c9a8"});
+            const eyeL = el("circle",{cx:752, cy:218, r:1.8, fill:"#2f3e52"});
+            const eyeR = el("circle",{cx:768, cy:218, r:1.8, fill:"#2f3e52"});
+            const mouth = el("path",{d:"M752 227 Q760 232 768 227", fill:"none", stroke:"#946d57", "stroke-width":"1.4"});
+            const cap = el("path",{fill:"#284f7a", d:"M732 202 L788 202 L760 186 Z"});
+            const capBand = el("rect",{x:740, y:201, width:40, height:6, fill:"#223f62"});
+            const tassel = el("line",{x1:786, y1:202, x2:796, y2:220, stroke:"#ffd54f", "stroke-width":"2"});
+            const leftArm = el("path",{fill:"none", stroke:"#335c88", "stroke-width":"8", "stroke-linecap":"round"});
+            const rightArm = el("path",{fill:"none", stroke:"#335c88", "stroke-width":"8", "stroke-linecap":"round"});
+            const bookBack = el("rect",{x:708, y:286, width:104, height:58, rx:5, fill:"#6f9dd3"});
+            const bookFront = el("path",{fill:"#8cb6e6"});
+            const page1 = el("line",{x1:722, y1:304, x2:798, y2:304, stroke:"#e9f2ff", "stroke-width":"1.5"});
+            const page2 = el("line",{x1:722, y1:318, x2:798, y2:318, stroke:"#e9f2ff", "stroke-width":"1.5"});
+            charLayer.append(aura, robe, neck, head, eyeL, eyeR, mouth, cap, capBand, tassel, leftArm, rightArm, bookBack, bookFront, page1, page2);
 
-            function bindParent(){ try{ const d=window.parent.document;
-              d.addEventListener("input",(e)=>{const t=e.target; if(t&&(t.tagName==="TEXTAREA"||(t.tagName==="INPUT"&&t.type==="text"))){ const has=!!(t.value&&t.value.trim().length); if(has) window.setTyping(); else if(!window.isThinking&&!window.isClapping) window.setFight(); }},true);
-              d.addEventListener("keydown",(e)=>{const t=e.target; if(t&&(t.tagName==="TEXTAREA"||(t.tagName==="INPUT"&&t.type==="text"))){ if(e.key==="Enter"&&!e.shiftKey) window.setThinking(2600);} },true);
-              d.addEventListener("click",(e)=>{const b=e.target.closest("button"); if(!b) return; const txt=(b.innerText||b.textContent||"").toLowerCase(); if(txt.includes("boosted")||txt.includes("penal")||txt.includes("yes")||txt.includes("no")||txt.includes("👍")||txt.includes("👎")) window.setClapping(2000);},true);
-            }catch(_){ } }
+            // Modes from parent app interaction
+            window.isTyping = false;
+            window.isThinking = false;
+            window.isClapping = false;
+            const mode = () => window.isClapping ? "Celebrating" : window.isThinking ? "Thinking" : window.isTyping ? "Typing" : "Idle";
+            window.setFight = () => { window.isTyping = false; window.isThinking = false; window.isClapping = false; };
+            window.setTyping = () => { window.isTyping = true; window.isThinking = false; window.isClapping = false; };
+            window.setThinking = (ms = 2600) => {
+              window.isTyping = false; window.isThinking = true; window.isClapping = false;
+              clearTimeout(window.__t);
+              window.__t = setTimeout(() => window.setFight(), ms);
+            };
+            window.setClapping = (ms = 2000) => {
+              window.isTyping = false; window.isThinking = false; window.isClapping = true;
+              clearTimeout(window.__c);
+              window.__c = setTimeout(() => window.setFight(), ms);
+            };
+
+            function bindParent() {
+              try {
+                const d = window.parent.document;
+                d.addEventListener("input", (e) => {
+                  const t = e.target;
+                  if (t && (t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type === "text"))) {
+                    const has = !!(t.value && t.value.trim().length);
+                    if (has) window.setTyping();
+                    else if (!window.isThinking && !window.isClapping) window.setFight();
+                  }
+                }, true);
+                d.addEventListener("keydown", (e) => {
+                  const t = e.target;
+                  if (t && (t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type === "text"))) {
+                    if (e.key === "Enter" && !e.shiftKey) window.setThinking(2600);
+                  }
+                }, true);
+                d.addEventListener("click", (e) => {
+                  const b = e.target.closest("button");
+                  if (!b) return;
+                  const txt = (b.innerText || b.textContent || "").toLowerCase();
+                  if (txt.includes("boosted") || txt.includes("penal") || txt.includes("yes") || txt.includes("no") || txt.includes("👍") || txt.includes("👎")) window.setClapping(2000);
+                }, true);
+              } catch (_) {}
+            }
             bindParent();
 
-            let last=performance.now();
-            function frame(now){
-              const t=now/1000, m=mode(); last=now; hud.textContent=`Mode: ${m}`;
-              for(const b of fb){ const y=b.by+Math.sin(t*b.dr+b.ph)*b.amp, x=b.bx+Math.cos(t*.6+b.ph)*8, r=Math.sin(t*.8+b.ph)*7, sb=window.isTyping?1.6:1; b.g.setAttribute("transform",`translate(${x+Math.sin(t*sb+b.ph)*3},${y}) rotate(${r})`); }
-              const sp=window.isThinking?1.9:(window.isTyping?1.3:1.0);
-              for(const o of orb){ const a=t*o.s*sp+o.p, x=oc.x+Math.cos(a)*o.r, y=oc.y+Math.sin(a)*(o.r*.6); o.o.setAttribute("cx",x); o.o.setAttribute("cy",y); o.c.setAttribute("cx",x); o.c.setAttribute("cy",y); }
-              const nod=(window.isThinking?4.2:2.0)*Math.sin(t*2.2); head.setAttribute("cy",220+nod); eyeL.setAttribute("cy",218+nod); eyeR.setAttribute("cy",218+nod); mouth.setAttribute("d",`M752 ${227+nod} Q760 ${232+nod} 768 ${227+nod}`);
-              cap.setAttribute("d",`M732 ${202+nod} L788 ${202+nod} L760 ${186+nod} Z`); capBand.setAttribute("y",201+nod); tassel.setAttribute("y1",202+nod); tassel.setAttribute("y2",220+nod+Math.sin(t*3)*2);
-              const flip=(Math.sin(t*(window.isThinking?7.5:3.5))+1)*.5, fold=20+flip*38; bookFront.setAttribute("d",`M708 286 L${812-fold} 286 L812 344 L708 344 Z`); leftArm.setAttribute("d","M732 262 Q710 282 715 310"); rightArm.setAttribute("d",`M788 262 Q808 280 ${790+flip*8} 308`);
-              aura.setAttribute("opacity",(window.isThinking?0.85+Math.sin(t*5)*0.18:0.48+Math.sin(t*2)*0.08).toFixed(3));
-              if(window.isClapping && Math.random()<0.30){ const p=el("circle",{cx:rand(660,860),cy:rand(70,170),r:rand(1.5,3.0),fill:"#ffd54f",opacity:.95}); fx.appendChild(p); setTimeout(()=>p.remove(),700); }
-              if(window.isThinking) thinkingDots(t); else if(!window.isClapping) fx.innerHTML="";
+            // 3D parallax target from mouse position
+            const parallax = { tx: 0, ty: 0, x: 0, y: 0 };
+            function updateMouseTarget(ev) {
+              const r = box.getBoundingClientRect();
+              const nx = ((ev.clientX - r.left) / r.width) * 2 - 1;
+              const ny = ((ev.clientY - r.top) / r.height) * 2 - 1;
+              parallax.tx = Math.max(-1, Math.min(1, nx));
+              parallax.ty = Math.max(-1, Math.min(1, ny));
+            }
+            box.addEventListener("mousemove", updateMouseTarget);
+            box.addEventListener("mouseleave", () => { parallax.tx = 0; parallax.ty = 0; });
+
+            let last = performance.now();
+            function frame(now) {
+              const t = now / 1000;
+              const dt = Math.min(0.05, (now - last) / 1000);
+              last = now;
+              const m = mode();
+
+              // Smooth parallax interpolation
+              parallax.x += (parallax.tx - parallax.x) * Math.min(1, dt * 9);
+              parallax.y += (parallax.ty - parallax.y) * Math.min(1, dt * 9);
+              const px = parallax.x * 18;
+              const py = parallax.y * 12;
+
+              sky.setAttribute("transform", `translate(${px * 0.12}, ${py * 0.10})`);
+              mapLayer.setAttribute("transform", `translate(${px * 0.25}, ${py * 0.20})`);
+              mid.setAttribute("transform", `translate(${px * 0.38}, ${py * 0.30})`);
+              floatLayer.setAttribute("transform", `translate(${px * 0.55}, ${py * 0.45})`);
+              charLayer.setAttribute("transform", `translate(${px * 0.85}, ${py * 0.68})`);
+
+              // Depth tilt for mild 3D feel
+              const rotX = (-parallax.y * 2.5).toFixed(2);
+              const rotY = (parallax.x * 3.8).toFixed(2);
+              box.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+
+              // Floating animation
+              for (const b of books) {
+                const y = b.by + Math.sin(t * b.dr + b.ph) * b.amp;
+                const x = b.bx + Math.cos(t * 0.6 + b.ph) * 8;
+                const r = Math.sin(t * 0.8 + b.ph) * 7;
+                const speedBoost = window.isTyping ? 1.6 : 1.0;
+                b.g.setAttribute("transform", `translate(${x + Math.sin(t * speedBoost + b.ph) * 3},${y}) rotate(${r})`);
+              }
+
+              const orbSpeed = window.isThinking ? 1.9 : (window.isTyping ? 1.3 : 1.0);
+              for (const o of orbs) {
+                const a = t * o.s * orbSpeed + o.p;
+                const x = oc.x + Math.cos(a) * o.r;
+                const y = oc.y + Math.sin(a) * (o.r * 0.6);
+                o.o.setAttribute("cx", x); o.o.setAttribute("cy", y);
+                o.c.setAttribute("cx", x); o.c.setAttribute("cy", y);
+              }
+
+              const nod = (window.isThinking ? 4.2 : 2.0) * Math.sin(t * 2.2);
+              head.setAttribute("cy", 220 + nod);
+              eyeL.setAttribute("cy", 218 + nod);
+              eyeR.setAttribute("cy", 218 + nod);
+              mouth.setAttribute("d", `M752 ${227 + nod} Q760 ${232 + nod} 768 ${227 + nod}`);
+              cap.setAttribute("d", `M732 ${202 + nod} L788 ${202 + nod} L760 ${186 + nod} Z`);
+              capBand.setAttribute("y", 201 + nod);
+              tassel.setAttribute("y1", 202 + nod);
+              tassel.setAttribute("y2", 220 + nod + Math.sin(t * 3) * 2);
+
+              const flip = (Math.sin(t * (window.isThinking ? 7.5 : 3.5)) + 1) * 0.5;
+              const fold = 20 + flip * 38;
+              bookFront.setAttribute("d", `M708 286 L${812 - fold} 286 L812 344 L708 344 Z`);
+              leftArm.setAttribute("d", "M732 262 Q710 282 715 310");
+              rightArm.setAttribute("d", `M788 262 Q808 280 ${790 + flip * 8} 308`);
+              aura.setAttribute("opacity", (window.isThinking ? 0.85 + Math.sin(t * 5) * 0.18 : 0.48 + Math.sin(t * 2) * 0.08).toFixed(3));
+
+              if (window.isClapping && Math.random() < 0.28) {
+                const p = el("circle", {cx: rand(660, 860), cy: rand(70, 170), r: rand(1.5, 3.0), fill:"#ffd54f", opacity:.95});
+                fx.appendChild(p);
+                setTimeout(() => p.remove(), 650);
+              }
+
+              hud.textContent = `Mode: ${m} | Depth: ${Math.abs(px).toFixed(1)}`;
               requestAnimationFrame(frame);
             }
             requestAnimationFrame(frame);
@@ -147,7 +685,7 @@ def render_arena_widget() -> None:
         </html>
         """
     )
-    components.html(modern_html, height=430, scrolling=False)
+    components.html(modern_html, height=490, scrolling=False)
     return
 
     html = textwrap.dedent(
@@ -693,6 +1231,21 @@ st.set_page_config(
 st.markdown(
     """
 <style>
+/* Main background - behind everything */
+body {
+    background: linear-gradient(135deg, #0a1a12 0%, #0d2818 50%, #06140c 100%);
+    background-attachment: fixed;
+}
+
+/* Left pane / Sidebar background */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, rgba(10, 26, 18, 0.95) 0%, rgba(13, 40, 24, 0.95) 100%);
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%2300ff88" stop-opacity="0.1"/><stop offset="100%" stop-color="%23ffd700" stop-opacity="0.05"/></linearGradient></defs><circle cx="100" cy="100" r="80" fill="url(%23g)"/></svg>');
+    background-repeat: no-repeat;
+    background-position: left bottom;
+    background-size: 80% auto;
+}
+
 /* Retrieved chunk cards */
 .chunk-card {
     background: #f0f4ff;
@@ -802,7 +1355,7 @@ with st.sidebar:
     st.caption(
         "Built by **Michael Nana Kwame Osei-Dei**  \n"
         "Index: **10022300168**  \n"
-        "CS4241 · AI Project 2026"
+        "IT3241 · AI Project 2026"
     )
 
 

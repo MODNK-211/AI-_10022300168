@@ -2,7 +2,7 @@
 
 **Author:** Michael Nana Kwame Osei-Dei  
 **Index Number:** 10022300168  
-**Course:** CS4241 - Introduction to Artificial Intelligence (2026)  
+**Course:** IT3241 - Introduction to Artificial Intelligence (2026)  
 **Institution:** Academic City University, Ghana  
 **Repository:** [github.com/MODNK-211/AI-_10022300168](https://github.com/MODNK-211/AI-_10022300168)  
 **Contact:** michael.oseidei@acity.edu.gh
@@ -153,10 +153,10 @@ pytest tests/ -v
 
 - GitHub collaborator: `GodwinDansoAcity`
 - Suggested email subject format:  
-  `CS4241_RAG_10022300168_Michael Nana Kwame Osei-Dei`
+  `IT3241_RAG_10022300168_Michael Nana Kwame Osei-Dei`
 
 ---
 
 ## Academic Integrity
 
-All code in this repository was written by Michael Nana Kwame Osei-Dei (10022300168) as original work for CS4241, 2026. No LangChain, LlamaIndex, Haystack, or equivalent prebuilt RAG pipeline was used.
+All code in this repository was written by Michael Nana Kwame Osei-Dei (10022300168) as original work for IT3241, 2026. No LangChain, LlamaIndex, Haystack, or equivalent prebuilt RAG pipeline was used.

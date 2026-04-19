@@ -1,7 +1,7 @@
 # The Acity Oracle – Full Project Documentation (Parts A–G)
 
 **Author:** Michael Nana Kwame Osei-Dei (10022300168)  
-**Course:** CS4241 – Introduction to Artificial Intelligence (2026)  
+**Course:** IT3241 – Introduction to Artificial Intelligence (2026)  
 **Repository:** `https://github.com/MODNK-211/AI-_10022300168`  
 **Live App:** `[YOUR_DEPLOYMENT_URL]`
 
@@ -224,5 +224,5 @@ Next query → Retriever reads FeedbackStore.get_boosts()
 - [ ] `docs/experiment_log_partC.txt` filled with REAL experimental results
 - [ ] `docs/experiment_log_partE.txt` filled with REAL experimental results
 - [ ] 2-minute video recorded following the script
-- [ ] Email sent to instructor with subject: `CS4241_RAG_10022300168_Michael Nana Kwame Osei-Dei`
+- [ ] Email sent to instructor with subject: `IT3241_RAG_10022300168_Michael Nana Kwame Osei-Dei`
   - Links: GitHub repo + deployed app + video
