@@ -15,7 +15,7 @@ L2 Normalisation:
   "how similar are two texts?" as a single dot product, which FAISS computes
   very efficiently.
 
-Author : [YOUR_FULL_NAME]  ([YOUR_INDEX_NUMBER])
+Author : Michael Nana Kwame Osei-Dei  (10022300168)
 """
 
 import logging

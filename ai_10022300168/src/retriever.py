@@ -23,7 +23,7 @@ Hybrid formula:
   α is controllable from the Streamlit sidebar (default 0.7).
   Higher α → more semantic; lower α → more keyword-driven.
 
-Author : [YOUR_FULL_NAME]  ([YOUR_INDEX_NUMBER])
+Author : Michael Nana Kwame Osei-Dei  (10022300168)
 """
 
 import logging

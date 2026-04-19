@@ -15,7 +15,7 @@ Pipeline stages:
   [STAGE 5] LLM inference            – HF Inference API call
   [STAGE 6] Response + query log     – append to logs/query_log.jsonl
 
-Author : [YOUR_FULL_NAME]  ([YOUR_INDEX_NUMBER])
+Author : Michael Nana Kwame Osei-Dei  (10022300168)
 """
 
 import os

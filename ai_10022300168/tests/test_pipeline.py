@@ -6,7 +6,7 @@ Run with:  pytest tests/ -v
 These tests do NOT call the LLM API or download datasets – they only verify
 the internal logic of chunking, embedding, vector storage, and prompt building.
 
-Author : [YOUR_FULL_NAME]  ([YOUR_INDEX_NUMBER])
+Author : Michael Nana Kwame Osei-Dei  (10022300168)
 """
 
 import os
@@ -275,7 +275,7 @@ class TestPromptBuilder:
 
     def test_template_v3_used_by_default(self):
         prompt, _ = build_prompt("test q", [_make_result("c", "ctx", 0.5)])
-        assert "AcityBot" in prompt              # V3 persona
+        assert "The Acity Oracle" in prompt              # V3 persona
         assert "STRICT RULES" in prompt          # V3 anti-hallucination
 
 

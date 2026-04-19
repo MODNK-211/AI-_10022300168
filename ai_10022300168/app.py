@@ -1,5 +1,5 @@
 """
-AcityBot – Academic City Knowledge Assistant
+The Acity Oracle – Academic City Knowledge Assistant
 ============================================
 Streamlit UI for the RAG chatbot.
 
@@ -13,7 +13,7 @@ Displays (Part D requirements):
 Run locally:
     streamlit run app.py
 
-Author : [YOUR_FULL_NAME]  ([YOUR_INDEX_NUMBER])
+Author : Michael Nana Kwame Osei-Dei  (10022300168)
 Course : CS4241 – Introduction to Artificial Intelligence (2026)
 """
 
@@ -36,7 +36,7 @@ from src.feedback import FeedbackStore # noqa: E402
 
 # ── Page configuration ────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="AcityBot – Academic City Knowledge Assistant",
+    page_title="The Acity Oracle – Academic City Knowledge Assistant",
     page_icon="🎓",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -105,7 +105,7 @@ st.markdown(
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## 🎓 AcityBot")
+    st.markdown("## 🎓 The Acity Oracle")
     st.caption("Academic City University Knowledge Assistant")
     st.divider()
 
@@ -153,8 +153,8 @@ with st.sidebar:
 
     st.divider()
     st.caption(
-        "Built by **[YOUR_FULL_NAME]**  \n"
-        "Index: **[YOUR_INDEX_NUMBER]**  \n"
+        "Built by **Michael Nana Kwame Osei-Dei**  \n"
+        "Index: **10022300168**  \n"
         "CS4241 · AI Project 2026"
     )
 
@@ -183,7 +183,7 @@ if "feedback_done" not in st.session_state:
 
 
 # ── Main page ─────────────────────────────────────────────────────────────────
-st.title("🎓 AcityBot – Academic City Knowledge Assistant")
+st.title("🎓 The Acity Oracle – Academic City Knowledge Assistant")
 st.markdown(
     "Ask me anything about **Ghana Election Results** "
     "or the **Ghana 2025 Budget Statement**."

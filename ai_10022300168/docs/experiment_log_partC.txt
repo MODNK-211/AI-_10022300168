@@ -1,7 +1,7 @@
 ================================================================================
 PART C – PROMPT ITERATION EXPERIMENT LOG
 CS4241 Introduction to Artificial Intelligence (2026)
-Student: [YOUR_FULL_NAME]  |  Index: [YOUR_INDEX_NUMBER]
+Student: Michael Nana Kwame Osei-Dei  |  Index: 10022300168
 ================================================================================
 
 INSTRUCTIONS TO STUDENT:

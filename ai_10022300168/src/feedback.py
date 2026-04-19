@@ -21,7 +21,7 @@ Design trade-offs noted:
   • Adjustments are chunk-level, not query-level, so they generalise across
     related questions that pull the same chunk.
 
-Author : [YOUR_FULL_NAME]  ([YOUR_INDEX_NUMBER])
+Author : Michael Nana Kwame Osei-Dei  (10022300168)
 """
 
 import os

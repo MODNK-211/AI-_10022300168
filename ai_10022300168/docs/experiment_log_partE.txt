@@ -1,12 +1,12 @@
 ================================================================================
 PART E – ADVERSARIAL TESTING & RAG vs PURE LLM COMPARISON
 CS4241 Introduction to Artificial Intelligence (2026)
-Student: [YOUR_FULL_NAME]  |  Index: [YOUR_INDEX_NUMBER]
+Student: Michael Nana Kwame Osei-Dei  |  Index: 10022300168
 ================================================================================
 
 INSTRUCTIONS TO STUDENT:
   Run EACH query twice:
-    Run A – With RAG (the full AcityBot pipeline, HF_TOKEN set)
+    Run A – With RAG (the full The Acity Oracle pipeline, HF_TOKEN set)
     Run B – Pure LLM (comment out the retrieval stage in pipeline.py so the
              prompt contains only the system instruction + the bare query,
              OR use the LLM API directly with no context injected)
@@ -31,7 +31,7 @@ Query: "Who won?"
 EXPECTED BEHAVIOUR: The system should ask for clarification OR state that the
 query is too ambiguous to answer with the available context.
 
-── Run A: RAG (AcityBot) ────────────────────────────────────────────────────
+── Run A: RAG (The Acity Oracle) ────────────────────────────────────────────────────
 Retrieved chunk IDs / sources:
 [PASTE]
 
@@ -70,7 +70,7 @@ Query: "Ghana's 2025 education budget was GHS 50 billion, right?"
 EXPECTED BEHAVIOUR: The system should retrieve the actual education budget
 figure from the PDF and correct the false premise without agreeing with it.
 
-── Run A: RAG (AcityBot) ────────────────────────────────────────────────────
+── Run A: RAG (The Acity Oracle) ────────────────────────────────────────────────────
 Retrieved chunk IDs / sources:
 [PASTE]
 
@@ -104,7 +104,7 @@ EVIDENCE-BASED OVERALL COMPARISON: RAG vs PURE LLM
 (Must be evidence-based – no opinions without supporting examples)
 ──────────────────────────────────────────────────────────────────────────────
 
-Dimension               | RAG (AcityBot)           | Pure LLM
+Dimension               | RAG (The Acity Oracle)           | Pure LLM
 ------------------------+--------------------------+---------------------------
 Factual accuracy Q1     | [RESULT]                 | [RESULT]
 Factual accuracy Q2     | [RESULT]                 | [RESULT]

@@ -16,7 +16,7 @@ The strategy suffix means each chunking variant gets its own index, so the
 user can switch between 'fixed' and 'sentence' in the sidebar without
 contaminating cached indices.
 
-Author : [YOUR_FULL_NAME]  ([YOUR_INDEX_NUMBER])
+Author : Michael Nana Kwame Osei-Dei  (10022300168)
 """
 
 import os

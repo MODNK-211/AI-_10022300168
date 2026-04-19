@@ -1,6 +1,6 @@
-# AcityBot – Architecture Documentation (Part F)
+# The Acity Oracle – Architecture Documentation (Part F)
 
-**Author:** [YOUR_FULL_NAME] ([YOUR_INDEX_NUMBER])  
+**Author:** Michael Nana Kwame Osei-Dei (10022300168)  
 **Course:** CS4241 – Introduction to Artificial Intelligence (2026)
 
 ---
@@ -174,4 +174,4 @@ Context window management: snippets are added in score order until 3,200 charact
    ```
    libgomp1
    ```
-5. The Space URL will be `https://huggingface.co/spaces/YOUR_USERNAME/ai_[YOUR_INDEX_NUMBER]`.
+5. The Space URL will be `https://huggingface.co/spaces/YOUR_USERNAME/ai_10022300168`.

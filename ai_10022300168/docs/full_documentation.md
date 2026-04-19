@@ -1,8 +1,8 @@
-# AcityBot – Full Project Documentation (Parts A–G)
+# The Acity Oracle – Full Project Documentation (Parts A–G)
 
-**Author:** [YOUR_FULL_NAME] ([YOUR_INDEX_NUMBER])  
+**Author:** Michael Nana Kwame Osei-Dei (10022300168)  
 **Course:** CS4241 – Introduction to Artificial Intelligence (2026)  
-**Repository:** `https://github.com/[YOUR_GITHUB_USERNAME]/ai_[YOUR_INDEX_NUMBER]`  
+**Repository:** `https://github.com/MODNK-211/AI-_10022300168`  
 **Live App:** `[YOUR_DEPLOYMENT_URL]`
 
 ---
@@ -118,7 +118,7 @@ Key additions:
 2. `[Source: N, M]` citation requirement after every answer
 3. Exact fallback phrase: *"I don't have enough information to answer that based on the available documents."*
 4. Explicit prohibition: *"NEVER speculate, invent statistics, or use knowledge outside the snippets."*
-5. Domain persona: *"AcityBot"* anchors the model to the Academic City context
+5. Domain persona: *"The Acity Oracle"* anchors the model to the Academic City context
 
 Analysis: The citation requirement is the single most effective hallucination control because it forces the model to trace its claim to a specific numbered chunk. If no chunk contains the answer, the model has no number to cite and correctly uses the fallback.
 
@@ -216,13 +216,13 @@ Next query → Retriever reads FeedbackStore.get_boosts()
 
 ## SUBMISSION CHECKLIST
 
-- [ ] Replaced all `[YOUR_FULL_NAME]` and `[YOUR_INDEX_NUMBER]` placeholders
-- [ ] GitHub repo created as `ai_[YOUR_INDEX_NUMBER]`
+- [ ] Replaced all `Michael Nana Kwame Osei-Dei` and `10022300168` placeholders
+- [ ] GitHub repo created as `ai_10022300168`
 - [ ] All files pushed to `main` branch
 - [ ] Collaborator `GodwinDansoAcity` (or `godwin.danso@acity.edu.gh`) added
 - [ ] App deployed to Streamlit Cloud or HF Spaces
 - [ ] `docs/experiment_log_partC.txt` filled with REAL experimental results
 - [ ] `docs/experiment_log_partE.txt` filled with REAL experimental results
 - [ ] 2-minute video recorded following the script
-- [ ] Email sent to instructor with subject: `CS4241_RAG_[YOUR_INDEX_NUMBER]_[YOUR_FULL_NAME]`
+- [ ] Email sent to instructor with subject: `CS4241_RAG_10022300168_Michael Nana Kwame Osei-Dei`
   - Links: GitHub repo + deployed app + video

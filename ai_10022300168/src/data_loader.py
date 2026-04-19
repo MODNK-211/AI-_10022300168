@@ -9,7 +9,7 @@ Handles downloading, parsing, and cleaning of both knowledge-base sources:
 All HTTP fetches use only the `requests` library (no framework wrappers).
 Downloaded files are cached in data/ so subsequent runs skip the download.
 
-Author : [YOUR_FULL_NAME]  ([YOUR_INDEX_NUMBER])
+Author : Michael Nana Kwame Osei-Dei  (10022300168)
 """
 
 import os
@@ -51,7 +51,7 @@ def _download(url: str, dest: str, timeout: int = 90) -> str:
         return dest
 
     logger.info("Downloading: %s", url)
-    headers = {"User-Agent": "Mozilla/5.0 (AcityBot/1.0; student project)"}
+    headers = {"User-Agent": "Mozilla/5.0 (The Acity Oracle/1.0; student project)"}
     resp = requests.get(url, headers=headers, timeout=timeout, stream=True)
     resp.raise_for_status()
 

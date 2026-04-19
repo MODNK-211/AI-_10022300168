@@ -28,7 +28,7 @@ Context Window Management:
   Hard limit MAX_CONTEXT_CHARS prevents prompt overflow.
   Snippets are added in score order; addition stops when budget is full.
 
-Author : [YOUR_FULL_NAME]  ([YOUR_INDEX_NUMBER])
+Author : Michael Nana Kwame Osei-Dei  (10022300168)
 """
 
 import logging
@@ -59,7 +59,7 @@ Answer:"""
 # ─────────────────────────────────────────────────────────────────────────────
 
 TEMPLATE_V3 = """[SYSTEM]
-You are AcityBot, a precise knowledge assistant for Academic City University, Ghana.
+You are The Acity Oracle, a precise knowledge assistant for Academic City University, Ghana.
 Your knowledge base contains Ghana election records and the Ghana 2025 Budget Statement.
 
 STRICT RULES – follow every rule or your answer is invalid:

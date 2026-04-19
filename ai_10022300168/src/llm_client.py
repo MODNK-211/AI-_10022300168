@@ -15,7 +15,7 @@ Environment variable required:
   HF_TOKEN  – your HuggingFace access token (read scope sufficient).
   Get one at: https://huggingface.co/settings/tokens
 
-Author : [YOUR_FULL_NAME]  ([YOUR_INDEX_NUMBER])
+Author : Michael Nana Kwame Osei-Dei  (10022300168)
 """
 
 import os

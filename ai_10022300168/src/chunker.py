@@ -37,7 +37,7 @@ Comparative impact (documented in docs/experiment_log_partC.txt):
   • Sentence chunks retrieved better for multi-sentence budget policy questions.
   • Hybrid search with sentence chunks produced the most coherent answers.
 
-Author : [YOUR_FULL_NAME]  ([YOUR_INDEX_NUMBER])
+Author : Michael Nana Kwame Osei-Dei  (10022300168)
 """
 
 import re
