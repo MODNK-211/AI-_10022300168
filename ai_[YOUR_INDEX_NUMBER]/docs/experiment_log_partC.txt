@@ -1,0 +1,125 @@
+================================================================================
+PART C – PROMPT ITERATION EXPERIMENT LOG
+CS4241 Introduction to Artificial Intelligence (2026)
+Student: [YOUR_FULL_NAME]  |  Index: [YOUR_INDEX_NUMBER]
+================================================================================
+
+INSTRUCTIONS TO STUDENT:
+  Run each query below using Template V1, V2, and V3 (switch ACTIVE_TEMPLATE
+  in src/prompt_builder.py).  Record the ACTUAL model output in the spaces
+  provided.  Do NOT fill this in with AI-generated answers – run the app
+  yourself and paste the real responses.
+
+  After completing all runs, write your ANALYSIS comparing the templates.
+
+──────────────────────────────────────────────────────────────────────────────
+EXPERIMENT SETUP
+──────────────────────────────────────────────────────────────────────────────
+Date of experiment       : [DATE YOU RAN THE EXPERIMENT]
+Chunking strategy used   : [fixed / sentence]
+Top-K setting            : [K value used]
+Alpha (semantic weight)  : [α value used]
+LLM model                : [model name returned by the app]
+HF_TOKEN set?            : [Yes / No]
+
+──────────────────────────────────────────────────────────────────────────────
+TEST QUERY 1: "How much did Ghana allocate to education in 2025?"
+(Tests: numerical grounding, source attribution)
+──────────────────────────────────────────────────────────────────────────────
+
+TEMPLATE V1 – Bare-bones
+  Retrieved chunks (paste chunk IDs or first 50 chars):
+  [PASTE RETRIEVED CHUNKS HERE]
+
+  LLM Response:
+  [PASTE ACTUAL RESPONSE HERE]
+
+  Hallucination observed? [Yes / No]
+  Reason: [YOUR ANALYSIS]
+
+─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+
+TEMPLATE V2 – With grounding instruction
+  Retrieved chunks:
+  [PASTE RETRIEVED CHUNKS HERE]
+
+  LLM Response:
+  [PASTE ACTUAL RESPONSE HERE]
+
+  Hallucination observed? [Yes / No]
+  Improvement over V1: [YOUR ANALYSIS]
+
+─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+
+TEMPLATE V3 – Numbered snippets + citation (ACTIVE)
+  Retrieved chunks:
+  [PASTE RETRIEVED CHUNKS HERE]
+
+  LLM Response:
+  [PASTE ACTUAL RESPONSE HERE]
+
+  Citation present? [Yes / No]
+  Hallucination observed? [Yes / No]
+  Improvement over V2: [YOUR ANALYSIS]
+
+──────────────────────────────────────────────────────────────────────────────
+TEST QUERY 2: "Which party won the most parliamentary seats in Ashanti Region?"
+(Tests: exact entity matching, CSV data lookup)
+──────────────────────────────────────────────────────────────────────────────
+
+TEMPLATE V1 Response:
+[PASTE ACTUAL RESPONSE HERE]
+
+TEMPLATE V2 Response:
+[PASTE ACTUAL RESPONSE HERE]
+
+TEMPLATE V3 Response:
+[PASTE ACTUAL RESPONSE HERE]
+
+Comparison notes:
+[YOUR ANALYSIS – MINIMUM 3 SENTENCES]
+
+──────────────────────────────────────────────────────────────────────────────
+TEST QUERY 3: "What is the government's policy on infrastructure spending?"
+(Tests: multi-sentence policy summary from PDF)
+──────────────────────────────────────────────────────────────────────────────
+
+TEMPLATE V1 Response:
+[PASTE ACTUAL RESPONSE HERE]
+
+TEMPLATE V2 Response:
+[PASTE ACTUAL RESPONSE HERE]
+
+TEMPLATE V3 Response:
+[PASTE ACTUAL RESPONSE HERE]
+
+Comparison notes:
+[YOUR ANALYSIS – MINIMUM 3 SENTENCES]
+
+──────────────────────────────────────────────────────────────────────────────
+QUANTITATIVE COMPARISON TABLE
+──────────────────────────────────────────────────────────────────────────────
+Fill in after running all experiments.
+
+Metric                     | V1   | V2   | V3
+---------------------------+------+------+------
+Factually correct (Q1)     |      |      |
+Factually correct (Q2)     |      |      |
+Factually correct (Q3)     |      |      |
+Citation provided          | N/A  | N/A  |
+"I don't know" when needed |      |      |
+Avg response length (words)|      |      |
+
+──────────────────────────────────────────────────────────────────────────────
+OVERALL ANALYSIS
+──────────────────────────────────────────────────────────────────────────────
+[WRITE 150–250 WORDS SUMMARISING YOUR FINDINGS.  ADDRESS:
+  1. Which template produced the most accurate answers and why.
+  2. What specific language in V3 reduced hallucinations.
+  3. Was there any query where V1 or V2 actually performed better?
+  4. What further iteration you would make if time permitted.]
+
+
+================================================================================
+END OF PART C LOG
+================================================================================
