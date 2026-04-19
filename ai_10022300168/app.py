@@ -20,8 +20,10 @@ Course : CS4241 – Introduction to Artificial Intelligence (2026)
 import os
 import sys
 import logging
+import textwrap
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 # ── Ensure src/ is importable as a package ───────────────────────────────────
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -33,6 +35,543 @@ logging.basicConfig(
 
 from src.pipeline import RAGPipeline   # noqa: E402
 from src.feedback import FeedbackStore # noqa: E402
+
+
+def render_arena_widget() -> None:
+    """
+    Render an SVG-based stickman combat arena near the top of the page.
+    Fighters can be defeated, then a new round restarts automatically.
+    """
+    html = textwrap.dedent(
+        """
+        <!doctype html>
+        <html>
+        <head>
+          <meta charset="utf-8"/>
+          <style>
+            :root { --w: 1100; --h: 470; }
+            body { margin: 0; padding: 0; background: transparent; font-family: sans-serif; }
+            .arena-wrap { width: 100%; max-width: 1150px; margin: 0 auto; }
+            .arena-box {
+              width: 100%;
+              aspect-ratio: 1100 / 470;
+              border-radius: 16px;
+              border: 1px solid #d4deea;
+              overflow: hidden;
+              background: #f5f8fc;
+              box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5), 0 2px 12px rgba(35, 52, 70, 0.08);
+            }
+            svg { width: 100%; height: 100%; display: block; }
+            .hud {
+              position: absolute;
+              right: 14px;
+              top: 10px;
+              background: rgba(255, 255, 255, 0.82);
+              border: 1px solid #d2dce9;
+              border-radius: 10px;
+              padding: 6px 8px;
+              font-size: 12px;
+              color: #455a70;
+            }
+            .frame { position: relative; }
+          </style>
+        </head>
+        <body>
+          <div class="arena-wrap">
+            <div class="frame">
+              <div class="arena-box">
+                <svg id="arena" viewBox="0 0 1100 470" preserveAspectRatio="xMidYMid meet" aria-label="SVG stickman combat arena">
+                  <defs>
+                    <linearGradient id="bgGrad" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stop-color="#f9fcff"/>
+                      <stop offset="100%" stop-color="#edf3fa"/>
+                    </linearGradient>
+                  </defs>
+                  <rect x="0" y="0" width="1100" height="470" fill="url(#bgGrad)"/>
+                  <g id="bgLayer"></g>
+                  <g id="sparkLayer"></g>
+                  <g id="fighterLayer"></g>
+                  <g id="fxLayer"></g>
+                </svg>
+              </div>
+              <div id="hud" class="hud">Mode: fight | Alive: 0</div>
+            </div>
+          </div>
+          <script>
+            const NS = "http://www.w3.org/2000/svg";
+            const CONFIG = {
+              w: 1100,
+              h: 470,
+              groundY: 360,
+              thinkMs: 2600,
+              clapMs: 2000,
+              roundResetMs: 2200,
+              palette: {
+                red: "#e74c3c", orange: "#f39c12", teal: "#16a085", blue: "#3498db",
+                purple: "#8e44ad", green: "#27ae60", rose: "#e84393", cyan: "#00bcd4",
+                sword: "#6d7a89", spark: "#ffd870", dead: "#8d97a2", text: "#455a70"
+              },
+              size: { head: 10, body: 35, arm: 24, leg: 25, sword: 32, stroke: 3.2 }
+            };
+
+            const arena = document.getElementById("arena");
+            const fighterLayer = document.getElementById("fighterLayer");
+            const sparkLayer = document.getElementById("sparkLayer");
+            const fxLayer = document.getElementById("fxLayer");
+            const bgLayer = document.getElementById("bgLayer");
+            const hud = document.getElementById("hud");
+
+            function svgEl(tag, attrs = {}) {
+              const n = document.createElementNS(NS, tag);
+              for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+              return n;
+            }
+            const rand = (a, b) => a + Math.random() * (b - a);
+            const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+            const TAU = Math.PI * 2;
+
+            function drawStaticBackground() {
+              // Subtle grid.
+              for (let x = 0; x <= CONFIG.w; x += 36) {
+                bgLayer.appendChild(svgEl("line", { x1: x, y1: 0, x2: x, y2: CONFIG.h, stroke: "#c8d4e1", "stroke-opacity": "0.10", "stroke-width": "1" }));
+              }
+              for (let y = 0; y <= CONFIG.h; y += 28) {
+                bgLayer.appendChild(svgEl("line", { x1: 0, y1: y, x2: CONFIG.w, y2: y, stroke: "#c8d4e1", "stroke-opacity": "0.10", "stroke-width": "1" }));
+              }
+              // Subtle Ghana accent.
+              bgLayer.appendChild(svgEl("rect", { x: 0, y: 0, width: CONFIG.w, height: 14, fill: "#ce1126", "fill-opacity": "0.07" }));
+              bgLayer.appendChild(svgEl("rect", { x: 0, y: 14, width: CONFIG.w, height: 9, fill: "#fcd116", "fill-opacity": "0.07" }));
+              bgLayer.appendChild(svgEl("rect", { x: 0, y: 23, width: CONFIG.w, height: 12, fill: "#006b3f", "fill-opacity": "0.07" }));
+              bgLayer.appendChild(svgEl("rect", { x: 0, y: CONFIG.groundY, width: CONFIG.w, height: CONFIG.h - CONFIG.groundY, fill: "#dce6f2" }));
+            }
+            drawStaticBackground();
+
+            window.isTyping = false;
+            window.isThinking = false;
+            window.isClapping = false;
+            function mode() {
+              if (window.isClapping) return "clap";
+              if (window.isThinking) return "think";
+              if (window.isTyping) return "typing";
+              return "fight";
+            }
+            window.setFight = function() { window.isTyping = false; window.isThinking = false; window.isClapping = false; };
+            window.setTyping = function() { window.isTyping = true; window.isThinking = false; window.isClapping = false; };
+            window.setThinking = function(ms = 2600) {
+              window.isTyping = false; window.isThinking = true; window.isClapping = false;
+              clearTimeout(window.__thinkTimer);
+              window.__thinkTimer = setTimeout(() => { if (window.isThinking) window.setFight(); }, ms);
+            };
+            window.setClapping = function(ms = 2000) {
+              window.isTyping = false; window.isThinking = false; window.isClapping = true;
+              clearTimeout(window.__clapTimer);
+              window.__clapTimer = setTimeout(() => { if (window.isClapping) window.setFight(); }, ms);
+            };
+            class Spark {
+              constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = rand(-2.3, 2.3);
+                this.vy = rand(-2.8, 1.0);
+                this.life = rand(0.18, 0.38);
+                this.age = 0;
+                this.node = svgEl("circle", { cx: x, cy: y, r: rand(1.2, 2.4), fill: CONFIG.palette.spark });
+                sparkLayer.appendChild(this.node);
+              }
+              update(dt) {
+                this.age += dt;
+                this.x += this.vx * 60 * dt;
+                this.y += this.vy * 60 * dt;
+                this.vy += 0.09;
+                const alpha = Math.max(0, 1 - this.age / this.life);
+                this.node.setAttribute("cx", this.x);
+                this.node.setAttribute("cy", this.y);
+                this.node.setAttribute("fill-opacity", alpha.toFixed(3));
+                if (this.age >= this.life) {
+                  this.node.remove();
+                  return false;
+                }
+                return true;
+              }
+            }
+            const sparks = [];
+            function spawnSparks(x, y, n = 8) { for (let i = 0; i < n; i++) sparks.push(new Spark(x, y)); }
+
+            function segDistSq(a, b, c, d) {
+              const ux = b.x - a.x, uy = b.y - a.y;
+              const vx = d.x - c.x, vy = d.y - c.y;
+              const wx = a.x - c.x, wy = a.y - c.y;
+              const A = ux * ux + uy * uy;
+              const B = ux * vx + uy * vy;
+              const C = vx * vx + vy * vy;
+              const D = ux * wx + uy * wy;
+              const E = vx * wx + vy * wy;
+              const den = A * C - B * B;
+              let s = 0, t = 0;
+              if (den !== 0) s = clamp((B * E - C * D) / den, 0, 1);
+              t = (B * s + E) / C;
+              if (t < 0) { t = 0; s = clamp(-D / A, 0, 1); }
+              else if (t > 1) { t = 1; s = clamp((B - D) / A, 0, 1); }
+              const dx = (a.x + ux * s) - (c.x + vx * t);
+              const dy = (a.y + uy * s) - (c.y + vy * t);
+              return dx * dx + dy * dy;
+            }
+
+            class Fighter {
+              constructor(opts) {
+                this.id = opts.id;
+                this.team = opts.team;
+                this.baseX = opts.x;
+                this.baseY = opts.y;
+                this.x = opts.x;
+                this.y = opts.y;
+                this.phase = opts.phase;
+                this.color = opts.color;
+                this.vx = 0;
+                this.facing = this.team === "L" ? 1 : -1;
+                this.attackCooldown = rand(0.4, 1.3);
+                this.attackPhase = 0;
+                this.health = 100;
+                this.alive = true;
+                this.deathPose = 0;
+                this.swordStart = { x: this.x, y: this.y };
+                this.swordEnd = { x: this.x, y: this.y };
+                this.damageLock = 0;
+                this.group = svgEl("g");
+                this.head = svgEl("circle", { r: CONFIG.size.head, fill: this.color });
+                this.body = svgEl("line", { "stroke-width": CONFIG.size.stroke, stroke: this.color, "stroke-linecap": "round" });
+                this.armL = svgEl("line", { "stroke-width": CONFIG.size.stroke, stroke: this.color, "stroke-linecap": "round" });
+                this.armR = svgEl("line", { "stroke-width": CONFIG.size.stroke, stroke: this.color, "stroke-linecap": "round" });
+                this.legL = svgEl("line", { "stroke-width": CONFIG.size.stroke, stroke: this.color, "stroke-linecap": "round" });
+                this.legR = svgEl("line", { "stroke-width": CONFIG.size.stroke, stroke: this.color, "stroke-linecap": "round" });
+                this.sword = svgEl("line", { "stroke-width": "2.7", stroke: CONFIG.palette.sword, "stroke-linecap": "round" });
+                this.eyeL = svgEl("circle", { r: "1.2", fill: "#fff" });
+                this.eyeR = svgEl("circle", { r: "1.2", fill: "#fff" });
+                this.hpBg = svgEl("rect", { width: "34", height: "4", rx: "2", fill: "#c8d2de" });
+                this.hpFg = svgEl("rect", { width: "34", height: "4", rx: "2", fill: "#3dbb6a" });
+                this.group.append(this.hpBg, this.hpFg, this.body, this.armL, this.armR, this.legL, this.legR, this.sword, this.head, this.eyeL, this.eyeR);
+                fighterLayer.appendChild(this.group);
+              }
+              reset() {
+                this.x = this.baseX;
+                this.y = this.baseY;
+                this.vx = 0;
+                this.health = 100;
+                this.alive = true;
+                this.deathPose = 0;
+                this.attackPhase = 0;
+                this.attackCooldown = rand(0.2, 1.0);
+                this.damageLock = 0;
+                this.applyColor(this.color);
+              }
+              applyColor(c) {
+                this.head.setAttribute("fill", c);
+                this.body.setAttribute("stroke", c);
+                this.armL.setAttribute("stroke", c);
+                this.armR.setAttribute("stroke", c);
+                this.legL.setAttribute("stroke", c);
+                this.legR.setAttribute("stroke", c);
+              }
+              findTarget(all) {
+                let best = null, dMin = 1e9;
+                for (const f of all) {
+                  if (f === this || !f.alive || f.team === this.team) continue;
+                  const d = Math.abs(f.x - this.x);
+                  if (d < dMin) { dMin = d; best = f; }
+                }
+                return [best, dMin];
+              }
+              receiveDamage(dmg) {
+                if (!this.alive || this.damageLock > 0) return;
+                this.health = Math.max(0, this.health - dmg);
+                this.damageLock = 0.12;
+                if (this.health <= 0) {
+                  this.alive = false;
+                  this.applyColor(CONFIG.palette.dead);
+                  this.hpFg.setAttribute("width", "0");
+                }
+              }
+              update(t, dt, m, all) {
+                if (this.damageLock > 0) this.damageLock -= dt;
+                if (!this.alive) {
+                  this.deathPose = clamp(this.deathPose + dt * 0.9, 0, 1);
+                  return;
+                }
+                if (m === "fight") {
+                  const [target, dist] = this.findTarget(all);
+                  if (target) {
+                    const dir = target.x > this.x ? 1 : -1;
+                    const desired = 98 + rand(-6, 8);
+                    const drive = clamp((dist - desired) * 0.014, -1.9, 1.9);
+                    this.vx = this.vx * 0.82 + dir * drive;
+                    this.x += this.vx;
+                    this.facing = dir;
+                  }
+                  this.x = clamp(this.x, 42, CONFIG.w - 42);
+                  this.y = this.baseY + Math.cos(t * 4 + this.phase) * 1.8;
+                  this.attackCooldown -= dt;
+                  if (this.attackCooldown <= 0) {
+                    this.attackPhase = 1;
+                    this.attackCooldown = rand(0.55, 1.25);
+                  }
+                  this.attackPhase = Math.max(0, this.attackPhase - dt * 1.55);
+                } else if (m === "typing") {
+                  this.x += (this.baseX - this.x) * 0.12;
+                  this.y += (this.baseY - this.y) * 0.12;
+                  this.facing = this.team === "L" ? 1 : -1;
+                  this.attackPhase = 0;
+                } else if (m === "think") {
+                  this.x += (this.baseX - this.x) * 0.12;
+                  this.y += (this.baseY - this.y) * 0.12;
+                  this.facing = this.team === "L" ? 1 : -1;
+                } else if (m === "clap") {
+                  this.x += (this.baseX - this.x) * 0.1;
+                  this.y = this.baseY + Math.sin(t * 8 + this.phase) * 2.5;
+                  this.facing = this.team === "L" ? 1 : -1;
+                }
+              }
+              render(t, m, idx) {
+                const S = CONFIG.size;
+                let armL = -0.9, armR = 0.6, legL = -0.7, legR = 0.7, swordA = -0.3, eye = 0;
+                if (!this.alive) {
+                  const fall = this.deathPose * (Math.PI * 0.45) * (this.team === "L" ? 1 : -1);
+                  const x = this.x, y = this.y + this.deathPose * 16;
+                  const bodyX2 = x + Math.sin(fall) * S.body;
+                  const bodyY2 = y + Math.cos(fall) * S.body;
+                  this.body.setAttribute("x1", x); this.body.setAttribute("y1", y);
+                  this.body.setAttribute("x2", bodyX2); this.body.setAttribute("y2", bodyY2);
+                  this.head.setAttribute("cx", x + Math.sin(fall) * 12);
+                  this.head.setAttribute("cy", y - 8 + Math.cos(fall) * 10);
+                  this.eyeL.setAttribute("cx", x + Math.sin(fall) * 12 - 2);
+                  this.eyeL.setAttribute("cy", y - 8 + Math.cos(fall) * 10 - 1);
+                  this.eyeR.setAttribute("cx", x + Math.sin(fall) * 12 + 2);
+                  this.eyeR.setAttribute("cy", y - 8 + Math.cos(fall) * 10 - 1);
+                  this.armL.setAttribute("x1", x); this.armL.setAttribute("y1", y + 6);
+                  this.armL.setAttribute("x2", x - 16); this.armL.setAttribute("y2", y + 18);
+                  this.armR.setAttribute("x1", x); this.armR.setAttribute("y1", y + 6);
+                  this.armR.setAttribute("x2", x + 16); this.armR.setAttribute("y2", y + 18);
+                  this.sword.setAttribute("x1", x + 16); this.sword.setAttribute("y1", y + 18);
+                  this.sword.setAttribute("x2", x + 36); this.sword.setAttribute("y2", y + 24);
+                  this.legL.setAttribute("x1", bodyX2); this.legL.setAttribute("y1", bodyY2);
+                  this.legL.setAttribute("x2", bodyX2 - 14); this.legL.setAttribute("y2", bodyY2 + 10);
+                  this.legR.setAttribute("x1", bodyX2); this.legR.setAttribute("y1", bodyY2);
+                  this.legR.setAttribute("x2", bodyX2 + 14); this.legR.setAttribute("y2", bodyY2 + 10);
+                  this.hpBg.setAttribute("x", x - 17); this.hpBg.setAttribute("y", y - 30);
+                  this.hpFg.setAttribute("x", x - 17); this.hpFg.setAttribute("y", y - 30);
+                  this.swordStart = { x: x + 16, y: y + 18 };
+                  this.swordEnd = { x: x + 36, y: y + 24 };
+                  return;
+                }
+                if (m === "fight") {
+                  const strike = Math.sin((1 - this.attackPhase) * Math.PI);
+                  const walk = Math.sin(t * 6 + this.phase);
+                  armL = -0.9 + Math.cos(t * 4 + this.phase) * 0.08;
+                  armR = 0.2 + strike * 0.95 + Math.cos(t * 4 + this.phase) * 0.08;
+                  legL = -0.75 + walk * 0.2;
+                  legR = 0.75 - walk * 0.2;
+                  swordA = (-0.25 + strike * 1.35) * this.facing;
+                  eye = 0.8 * this.facing;
+                } else if (m === "typing") {
+                  armL = 0.1; armR = 0.2; legL = -0.55; legR = 0.55; swordA = 1.5; eye = 1.4;
+                } else if (m === "think") {
+                  legL = -0.5; legR = 0.5; eye = 1.0;
+                  if (idx === 0) { armR = -1.5 + Math.sin(t * 10) * 0.2; armL = 0.15; swordA = 1.45; }
+                  else { armL = 0.25; armR = 0.38; swordA = 1.35; }
+                } else if (m === "clap") {
+                  const cl = Math.sin(t * 16 + this.phase);
+                  armL = -0.2 + cl * 0.45;
+                  armR = 0.2 - cl * 0.45;
+                  legL = -0.5; legR = 0.5; swordA = 1.55; eye = 0.5;
+                }
+                const x = this.x, y = this.y;
+                const sy = y + 7;
+                const lx2 = x + Math.cos(Math.PI + armL) * S.arm;
+                const ly2 = sy + Math.sin(Math.PI + armL) * S.arm;
+                const rx2 = x + Math.cos(armR) * S.arm;
+                const ry2 = sy + Math.sin(armR) * S.arm;
+                const sx2 = rx2 + Math.cos(swordA) * S.sword;
+                const sy2 = ry2 + Math.sin(swordA) * S.sword;
+                this.body.setAttribute("x1", x); this.body.setAttribute("y1", y);
+                this.body.setAttribute("x2", x); this.body.setAttribute("y2", y + S.body);
+                this.head.setAttribute("cx", x); this.head.setAttribute("cy", y - S.head - 2);
+                this.eyeL.setAttribute("cx", x - 2 + eye); this.eyeL.setAttribute("cy", y - S.head - 4);
+                this.eyeR.setAttribute("cx", x + 2 + eye); this.eyeR.setAttribute("cy", y - S.head - 4);
+                this.armL.setAttribute("x1", x); this.armL.setAttribute("y1", sy);
+                this.armL.setAttribute("x2", lx2); this.armL.setAttribute("y2", ly2);
+                this.armR.setAttribute("x1", x); this.armR.setAttribute("y1", sy);
+                this.armR.setAttribute("x2", rx2); this.armR.setAttribute("y2", ry2);
+                this.sword.setAttribute("x1", rx2); this.sword.setAttribute("y1", ry2);
+                this.sword.setAttribute("x2", sx2); this.sword.setAttribute("y2", sy2);
+                this.legL.setAttribute("x1", x); this.legL.setAttribute("y1", y + S.body);
+                this.legL.setAttribute("x2", x + Math.cos(Math.PI + legL) * S.leg); this.legL.setAttribute("y2", y + S.body + Math.sin(Math.PI + legL) * S.leg);
+                this.legR.setAttribute("x1", x); this.legR.setAttribute("y1", y + S.body);
+                this.legR.setAttribute("x2", x + Math.cos(legR) * S.leg); this.legR.setAttribute("y2", y + S.body + Math.sin(legR) * S.leg);
+                this.hpBg.setAttribute("x", x - 17); this.hpBg.setAttribute("y", y - 28);
+                this.hpFg.setAttribute("x", x - 17); this.hpFg.setAttribute("y", y - 28);
+                this.hpFg.setAttribute("width", (34 * (this.health / 100)).toFixed(2));
+                this.swordStart = { x: rx2, y: ry2 };
+                this.swordEnd = { x: sx2, y: sy2 };
+              }
+            }
+
+            const fighters = [
+              new Fighter({ id: 1, team: "L", x: 120, y: 300, phase: 0.2, color: CONFIG.palette.red }),
+              new Fighter({ id: 2, team: "L", x: 210, y: 255, phase: 1.0, color: CONFIG.palette.orange }),
+              new Fighter({ id: 3, team: "L", x: 295, y: 320, phase: 1.8, color: CONFIG.palette.purple }),
+              new Fighter({ id: 4, team: "L", x: 370, y: 275, phase: 2.4, color: CONFIG.palette.green }),
+              new Fighter({ id: 5, team: "R", x: 970, y: 300, phase: 0.6, color: CONFIG.palette.blue }),
+              new Fighter({ id: 6, team: "R", x: 895, y: 250, phase: 1.5, color: CONFIG.palette.teal }),
+              new Fighter({ id: 7, team: "R", x: 815, y: 322, phase: 2.2, color: CONFIG.palette.rose }),
+              new Fighter({ id: 8, team: "R", x: 730, y: 275, phase: 3.1, color: CONFIG.palette.cyan }),
+            ];
+
+            function aliveCounts() {
+              let l = 0, r = 0;
+              for (const f of fighters) {
+                if (!f.alive) continue;
+                if (f.team === "L") l++; else r++;
+              }
+              return [l, r];
+            }
+            let roundOverAt = 0;
+            function resetRound() {
+              sparks.forEach((s) => s.node.remove());
+              sparks.length = 0;
+              fxLayer.innerHTML = "";
+              fighters.forEach((f) => f.reset());
+              roundOverAt = 0;
+            }
+            function showWinnerText(text) {
+              fxLayer.innerHTML = "";
+              const label = svgEl("text", {
+                x: CONFIG.w / 2,
+                y: 84,
+                "text-anchor": "middle",
+                "font-size": "28",
+                "font-weight": "700",
+                "fill": "#3f5368",
+                "fill-opacity": "0.93"
+              });
+              label.textContent = text;
+              fxLayer.appendChild(label);
+            }
+
+            function drawThinkingBubble(t) {
+              fxLayer.innerHTML = "";
+              const g = svgEl("g", { "fill-opacity": "0.92" });
+              const x = 160, y = 100;
+              const p = (Math.sin(t * 4) + 1) * 0.5;
+              g.appendChild(svgEl("circle", { cx: x, cy: y, r: 14, fill: "#fff" }));
+              g.appendChild(svgEl("circle", { cx: x + 24, cy: y - 9, r: 9, fill: "#fff" }));
+              g.appendChild(svgEl("circle", { cx: x + 38, cy: y - 15, r: 6, fill: "#fff" }));
+              g.appendChild(svgEl("circle", { cx: x - 4, cy: y, r: 2 + p * 0.4, fill: "#7f8c8d" }));
+              g.appendChild(svgEl("circle", { cx: x + 3, cy: y, r: 2 + p * 0.4, fill: "#7f8c8d" }));
+              g.appendChild(svgEl("circle", { cx: x + 10, cy: y, r: 2 + p * 0.4, fill: "#7f8c8d" }));
+              fxLayer.appendChild(g);
+            }
+
+            function bindParentEvents(){
+              try {
+                const doc = window.parent.document;
+                let inputEl = null;
+                const scanInput = () => {
+                  inputEl = doc.querySelector("textarea[aria-label*='chat' i], textarea[placeholder*='Type your question' i], textarea, input[type='text']");
+                };
+                scanInput();
+                const observer = new MutationObserver(() => {
+                  if (!inputEl || !doc.contains(inputEl)) scanInput();
+                });
+                observer.observe(doc.body, { childList: true, subtree: true });
+
+                doc.addEventListener("input", (e) => {
+                  const t = e.target;
+                  if (t && (t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type === "text"))) {
+                    const hasText = !!(t.value && t.value.trim().length);
+                    if (hasText) window.setTyping(); else if (!window.isThinking && !window.isClapping) window.setFight();
+                  }
+                }, true);
+
+                doc.addEventListener("keydown", (e) => {
+                  const t = e.target;
+                  if (t && (t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type === "text"))) {
+                    if (e.key === "Enter" && !e.shiftKey) window.setThinking(2600);
+                  }
+                }, true);
+
+                doc.addEventListener("click", (e) => {
+                  const b = e.target.closest("button");
+                  if (!b) return;
+                  const txt = (b.innerText || b.textContent || "").trim().toLowerCase();
+                  if (txt.includes("boosted") || txt.includes("penal") || txt.includes("yes") || txt.includes("no") || txt.includes("👍") || txt.includes("👎")) {
+                    window.setClapping(2000);
+                  }
+                }, true);
+              } catch (err) {
+                // If parent DOM access is blocked, component still runs in default loop.
+              }
+            }
+            bindParentEvents();
+
+            let last = performance.now();
+            function frame(now) {
+              const dt = Math.min(0.05, (now - last) / 1000);
+              const t = now / 1000;
+              last = now;
+              const m = mode();
+              if (m !== "think") fxLayer.innerHTML = "";
+
+              for (const f of fighters) f.update(t, dt, m, fighters);
+              for (let i = 0; i < fighters.length; i++) fighters[i].render(t, m, i);
+
+              if (m === "fight") {
+                for (let i = 0; i < fighters.length; i++) {
+                  for (let j = i + 1; j < fighters.length; j++) {
+                    const a = fighters[i], b = fighters[j];
+                    if (!a.alive || !b.alive || a.team === b.team) continue;
+                    const d2 = segDistSq(a.swordStart, a.swordEnd, b.swordStart, b.swordEnd);
+                    if (d2 < 30) {
+                      const mx = (a.swordEnd.x + b.swordEnd.x) * 0.5;
+                      const my = (a.swordEnd.y + b.swordEnd.y) * 0.5;
+                      spawnSparks(mx, my, 7);
+                      // Apply damage from active strike swings only.
+                      if (a.attackPhase > 0.42) b.receiveDamage(rand(8, 16));
+                      if (b.attackPhase > 0.42) a.receiveDamage(rand(8, 16));
+                    }
+                  }
+                }
+                const [lAlive, rAlive] = aliveCounts();
+                if ((lAlive === 0 || rAlive === 0) && roundOverAt === 0) {
+                  roundOverAt = now;
+                  showWinnerText(lAlive > 0 ? "Left Team Wins" : "Right Team Wins");
+                }
+                if (roundOverAt && now - roundOverAt > CONFIG.roundResetMs) {
+                  resetRound();
+                }
+              } else if (m === "think") {
+                drawThinkingBubble(t);
+              } else if (m === "clap" && Math.random() < 0.28) {
+                const alive = fighters.filter((f) => f.alive);
+                if (alive.length) {
+                  const p = alive[(Math.random() * alive.length) | 0];
+                  spawnSparks(p.x, p.y - 30, 10);
+                }
+              }
+
+              for (let i = sparks.length - 1; i >= 0; i--) {
+                if (!sparks[i].update(dt)) sparks.splice(i, 1);
+              }
+
+              const [lAlive, rAlive] = aliveCounts();
+              hud.textContent = `Mode: ${m} | Alive: L${lAlive} - R${rAlive}`;
+              requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+          </script>
+        </body>
+        </html>
+        """
+    )
+    components.html(html, height=480, scrolling=False)
 
 # ── Page configuration ────────────────────────────────────────────────────────
 st.set_page_config(
@@ -188,6 +727,7 @@ st.markdown(
     "Ask me anything about **Ghana Election Results** "
     "or the **Ghana 2025 Budget Statement**."
 )
+render_arena_widget()
 
 # ── Render chat history ───────────────────────────────────────────────────────
 for msg in st.session_state.messages:
