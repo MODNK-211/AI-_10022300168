@@ -37,7 +37,7 @@ flowchart TD
         BOOST["feedback.py\nScore Boosts / Penalties\n(Part G feedback loop)"]
         CTX["prompt_builder.py\nContext Builder\nNumbered snippets ≤ 3200 chars"]
         PROMPT["Prompt Template V3\nStrict anti-hallucination rules\nCitation requirement [Source: N]"]
-        LLM["llm_client.py\nHF Inference API\nMistral-7B-Instruct-v0.3\n(fallback: Zephyr-7B)"]
+        LLM["llm_client.py\nGroq Chat Completions (preferred)\nllama-3.1-8b-instant\n(fallback: HF router models)"]
         RESP["Response\n(grounded + cited)"]
     end
 
@@ -123,9 +123,9 @@ Three template iterations:
 Context window management: snippets are added in score order until 3,200 character budget is exhausted.
 
 ### 7. LLM Client (`src/llm_client.py`)
-- Calls HuggingFace Inference API with `requests` only (no SDK).
-- `return_full_text: false` ensures only generated tokens are returned.
-- Auto-fallback to `zephyr-7b-beta` on HTTP errors.
+- Calls Groq Chat Completions with `requests` only (no SDK) when `GROQ_API_KEY` is set.
+- Uses `GROQ_CHAT_MODEL` (default `llama-3.1-8b-instant`) for Groq inference.
+- Falls back to Hugging Face router models (`HF_CHAT_MODELS`) when Groq is unavailable.
 - `temperature=0.1` for reproducible, factual responses.
 
 ### 8. Feedback Loop (`src/feedback.py`)  — Part G
@@ -146,7 +146,7 @@ Context window management: snippets are added in score order until 3,200 charact
 
 4. **Transparency for academic context.** All retrieved chunks, similarity scores, and the exact prompt are visible in the UI—meeting the academic integrity requirement that the grader can verify the system's reasoning chain.
 
-5. **Low infrastructure cost.** FAISS with ~10–50 k vectors runs on a free-tier CPU. The HF Inference API is free for the model sizes used. This is appropriate for a student project deployed on Streamlit Community Cloud.
+5. **Low infrastructure cost.** FAISS with ~10–50 k vectors runs on a free-tier CPU. Groq (or HF fallback) keeps serving simple and lightweight for a student deployment on Streamlit Community Cloud.
 
 ---
 
@@ -159,6 +159,8 @@ Context window management: snippets are added in score order until 3,200 charact
 3. Select your repo, branch `main`, main file `app.py`.
 4. Under **Advanced settings → Secrets**, add:
    ```toml
+   GROQ_API_KEY = "gsk_your_actual_key"
+   # Optional fallback:
    HF_TOKEN = "hf_your_actual_token"
    ```
 5. Click **Deploy**. The app URL will be `https://your-app-name.streamlit.app`.
@@ -169,7 +171,8 @@ Context window management: snippets are added in score order until 3,200 charact
    - SDK: **Streamlit**
    - Hardware: CPU Basic (free)
 2. Clone the Space repo and push your project files.
-3. Add a `HF_TOKEN` repository secret under **Settings → Repository secrets**.
+3. Add a `GROQ_API_KEY` repository secret under **Settings → Repository secrets**.
+   Optionally add `HF_TOKEN` as fallback.
 4. Add a `packages.txt` if `faiss-cpu` needs system libs:
    ```
    libgomp1

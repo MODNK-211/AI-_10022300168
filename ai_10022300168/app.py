@@ -21,9 +21,30 @@ import os
 import sys
 import logging
 import textwrap
+import base64
 
 import streamlit as st
 import streamlit.components.v1 as components
+
+# Path to the background image (relative to app.py)
+BG_IMAGE_PATH = "pic_1.png"
+
+
+def _build_bg_image_url(image_path: str) -> str:
+    """
+    Return a CSS-safe image URL.
+    Prefer an inlined data URI so background rendering is reliable in Streamlit.
+    """
+    abs_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), image_path)
+    try:
+        with open(abs_path, "rb") as f:
+            encoded = base64.b64encode(f.read()).decode("ascii")
+        return f"data:image/png;base64,{encoded}"
+    except OSError:
+        return image_path
+
+
+BG_IMAGE_URL = _build_bg_image_url(BG_IMAGE_PATH)
 
 # ── Ensure src/ is importable as a package ───────────────────────────────────
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -1233,17 +1254,13 @@ st.markdown(
 <style>
 /* Main background - behind everything */
 body {
-    background: linear-gradient(135deg, #0a1a12 0%, #0d2818 50%, #06140c 100%);
-    background-attachment: fixed;
+    background: transparent;
 }
 
 /* Left pane / Sidebar background */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, rgba(10, 26, 18, 0.95) 0%, rgba(13, 40, 24, 0.95) 100%);
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%2300ff88" stop-opacity="0.1"/><stop offset="100%" stop-color="%23ffd700" stop-opacity="0.05"/></linearGradient></defs><circle cx="100" cy="100" r="80" fill="url(%23g)"/></svg>');
-    background-repeat: no-repeat;
-    background-position: left bottom;
-    background-size: 80% auto;
+    background: rgba(8, 12, 18, 0.30);
+    backdrop-filter: blur(2px);
 }
 
 /* Retrieved chunk cards */
@@ -1304,80 +1321,127 @@ section[data-testid="stSidebar"] {
 
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
-with st.sidebar:
-    st.markdown("## 🎓 The Acity Oracle")
-    st.caption("Academic City University Knowledge Assistant")
-    st.divider()
 
-    st.subheader("⚙️ Retrieval Settings")
-    top_k = st.slider(
-        "Top-K documents to retrieve",
-        min_value=1, max_value=10, value=5,
-        help="Number of context chunks shown to the LLM.",
-    )
-    alpha = st.slider(
-        "Semantic weight α",
-        min_value=0.0, max_value=1.0, value=0.7, step=0.05,
-        help="α=1.0 → pure semantic search | α=0.0 → pure keyword (TF-IDF)\n"
-             "Default 0.7 balances both (hybrid search).",
-    )
-    chunking_strategy = st.selectbox(
-        "Chunking strategy",
-        options=["fixed", "sentence"],
-        index=0,
-        help=(
-            "fixed: sliding window (500 chars, 75 overlap)\n"
-            "sentence: sentence-boundary grouping (~450 chars, ≤5 sentences)\n\n"
-            "Changing strategy rebuilds the index on first use."
-        ),
-    )
+# Inline CSS with background image
+st.markdown(f"""
+<style>
+/* Global background image */
+[data-testid="stAppViewContainer"] {{
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.25)),
+    url('{BG_IMAGE_URL}');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
+}}
 
-    st.divider()
+/* Keep the app content transparent on top of the image */
+[data-testid="stHeader"],
+[data-testid="stToolbar"],
+[data-testid="stMainBlockContainer"],
+[data-testid="stMain"],
+.stApp {{
+  background: transparent !important;
+}}
 
-    st.subheader("🔍 Debug Options")
-    show_prompt  = st.checkbox("Show prompt sent to LLM",   value=True)
-    show_log     = st.checkbox("Show pipeline execution log", value=False)
+/* Left pane / Sidebar background */
+section[data-testid="stSidebar"] {{
+  background: rgba(8, 12, 18, 0.30);
+  backdrop-filter: blur(2px);
+}}
 
-    st.divider()
+/* Retrieved chunk cards */
+.chunk-card {{
+  background: #f0f4ff;
+  border-left: 4px solid #4a6cf7;
+  padding: 0.75rem 1rem;
+  margin: 0.3rem 0;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}}
+.score-badge {{
+  display: inline-block;
+  background: #4a6cf7;
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.73rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}}
+/* Prompt display */
+.prompt-box {{
+  background: #1e1e2e;
+  color: #cdd6f4;
+  padding: 1rem 1.2rem;
+  border-radius: 8px;
+  font-family: "Courier New", monospace;
+  font-size: 0.77rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 320px;
+  overflow-y: auto;
+}}
+/* Pipeline log */
+.log-box {{
+  background: #0d1117;
+  color: #7ee787;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-family: "Courier New", monospace;
+  font-size: 0.73rem;
+  white-space: pre-wrap;
+  max-height: 220px;
+  overflow-y: auto;
+}}
+/* Source tag */
+.source-tag {{
+  font-size: 0.72rem;
+  color: #555;
+  font-style: italic;
+}}
+</style>
+""", unsafe_allow_html=True)
 
-    st.subheader("📊 Feedback Stats")
-    fb_store = FeedbackStore()
-    stats    = fb_store.get_stats()
-    c1, c2 = st.columns(2)
-    c1.metric("👍 Boosted",   stats["positive"])
-    c2.metric("👎 Penalised", stats["negative"])
-    if st.button("🔄 Reset feedback"):
-        FeedbackStore().reset()
-        st.success("Feedback cleared.")
-        st.rerun()
-
-    st.divider()
-    st.caption(
-        "Built by **Michael Nana Kwame Osei-Dei**  \n"
-        "Index: **10022300168**  \n"
-        "IT3241 · AI Project 2026"
-    )
-
-
-# ── Cached pipeline loader ────────────────────────────────────────────────────
-
-@st.cache_resource(
-    show_spinner="⏳ Building knowledge base — first run may take a few minutes…"
-)
+@st.cache_resource(show_spinner=False)
 def get_pipeline(strategy: str) -> RAGPipeline:
     """
-    Cache one RAGPipeline per chunking strategy.
-    Streamlit reruns reuse the cached object; retrieval parameters (α, k)
-    are passed at query time rather than baked into the cached object.
+    Build and cache one pipeline instance per chunking strategy.
     """
     return RAGPipeline(strategy=strategy)
 
 
-# ── Session state initialisation ──────────────────────────────────────────────
-if "messages"      not in st.session_state:
-    st.session_state.messages      = []   # [{role, content}, …]
-if "last_result"   not in st.session_state:
-    st.session_state.last_result   = None
+with st.sidebar:
+    st.header("Configuration")
+    chunking_strategy = st.selectbox(
+        "Chunking strategy",
+        options=["fixed", "sentence"],
+        index=0,
+        help="Choose how source documents are split before retrieval.",
+    )
+    alpha = st.slider(
+        "Semantic vs Keyword weight (alpha)",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.7,
+        step=0.05,
+    )
+    top_k = st.slider(
+        "Top-k retrieved chunks",
+        min_value=1,
+        max_value=12,
+        value=5,
+        step=1,
+    )
+    show_prompt = st.toggle("Show exact prompt sent to LLM", value=False)
+    show_log = st.toggle("Show pipeline execution log", value=False)
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "last_result" not in st.session_state:
+    st.session_state.last_result = None
 if "feedback_done" not in st.session_state:
     st.session_state.feedback_done = False
 
@@ -1475,7 +1539,8 @@ if query:
             st.error(f"LLM Error: {err}")
             resp = (
                 "⚠️ Could not reach the language model. "
-                "Make sure **HF_TOKEN** is set in your environment or `.env` file."
+                "Make sure **GROQ_API_KEY** (preferred) or **HF_TOKEN** is set "
+                "in your environment or `.env` file."
             )
 
         st.markdown(resp)

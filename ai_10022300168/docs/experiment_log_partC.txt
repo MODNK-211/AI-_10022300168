@@ -20,7 +20,8 @@ Chunking strategy used   : [fixed / sentence]
 Top-K setting            : [K value used]
 Alpha (semantic weight)  : [α value used]
 LLM model                : [model name returned by the app]
-HF_TOKEN set?            : [Yes / No]
+GROQ_API_KEY set?        : [Yes / No]
+HF_TOKEN fallback set?   : [Yes / No]
 
 ──────────────────────────────────────────────────────────────────────────────
 TEST QUERY 1: "How much did Ghana allocate to education in 2025?"

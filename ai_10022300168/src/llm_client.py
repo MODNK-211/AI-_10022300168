@@ -1,14 +1,20 @@
 """
 LLM Client Module
 -----------------
-Calls an LLM via Hugging Face **Inference Providers** using only `requests`
-(OpenAI-compatible chat completions on the HF router).
+Calls an LLM via Groq or Hugging Face using only `requests`
+(OpenAI-compatible chat completions endpoints).
 
 Legacy `https://api-inference.huggingface.co/models/...` is no longer used
 (HF returns 404 for that path).
 
 Environment variables:
-  HF_TOKEN (required)
+  GROQ_API_KEY (optional, preferred)
+      Groq API key for https://api.groq.com/openai/v1/chat/completions.
+
+  GROQ_CHAT_MODEL (optional)
+      Groq model id. Default: llama-3.1-8b-instant
+
+  HF_TOKEN (optional fallback)
       Hugging Face access token. For Inference Providers, use a token that is
       allowed to call the router (see HF token settings / fine-grained scopes).
 
@@ -34,6 +40,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 _ROUTER_CHAT = "https://router.huggingface.co/v1/chat/completions"
+_GROQ_CHAT = "https://api.groq.com/openai/v1/chat/completions"
 
 _DEFAULT_MODELS = [
     "mistralai/Mistral-7B-Instruct-v0.3:fastest",
@@ -44,12 +51,21 @@ DEFAULT_MAX_TOKENS = 512
 DEFAULT_TEMPERATURE = 0.1
 
 
+def _groq_token() -> str:
+    token = os.getenv("GROQ_API_KEY", "").strip()
+    return token
+
+
+def _groq_model() -> str:
+    return os.getenv("GROQ_CHAT_MODEL", "llama-3.1-8b-instant").strip() or "llama-3.1-8b-instant"
+
+
 def _hf_token() -> str:
     token = os.getenv("HF_TOKEN", "").strip()
     if not token:
         logger.warning(
-            "HF_TOKEN is not set. Set it in `.env` (loaded by app.py), your shell, "
-            "or Streamlit secrets before calling the LLM."
+            "HF_TOKEN is not set. Set GROQ_API_KEY (preferred) or HF_TOKEN in `.env`, "
+            "your shell, or Streamlit secrets before calling the LLM."
         )
     return token
 
@@ -92,9 +108,8 @@ def query_llm(
     temperature: float = DEFAULT_TEMPERATURE,
 ) -> dict:
     """
-    Send *prompt* to Hugging Face Inference Providers (router chat completions).
-
-    Tries each model in ``HF_CHAT_MODELS`` (or defaults) until one succeeds.
+    Send *prompt* to Groq (preferred when GROQ_API_KEY exists), otherwise
+    Hugging Face Inference Providers.
 
     Returns:
         {
@@ -104,21 +119,69 @@ def query_llm(
           "error": str | None,
         }
     """
+    last_error = ""
+
+    groq_token = _groq_token()
+    if groq_token:
+        groq_model = _groq_model()
+        payload = {
+            "model": groq_model,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+        }
+        headers = {
+            "Authorization": f"Bearer {groq_token}",
+            "Content-Type": "application/json",
+        }
+        try:
+            logger.info("Calling LLM (groq): %s (max_tokens=%d)", groq_model, max_tokens)
+            resp = requests.post(_GROQ_CHAT, headers=headers, json=payload, timeout=120)
+            resp.raise_for_status()
+            data = resp.json()
+            text, perr = _parse_chat_json(data)
+            if perr:
+                last_error = f"{groq_model}: {perr}"
+                logger.warning(last_error)
+            elif text:
+                logger.info("LLM OK: %d chars received from %s", len(text), groq_model)
+                return {
+                    "response": text,
+                    "model": groq_model,
+                    "tokens": len(text.split()),
+                    "error": None,
+                }
+            else:
+                last_error = f"{groq_model}: empty assistant content"
+                logger.warning(last_error)
+        except requests.exceptions.HTTPError as exc:
+            detail = ""
+            try:
+                detail = exc.response.text[:500]
+            except Exception:
+                detail = ""
+            last_error = f"HTTP {exc.response.status_code} from {groq_model}: {exc} {detail}".strip()
+            logger.warning(last_error)
+        except requests.exceptions.Timeout:
+            last_error = f"Timeout calling {groq_model}"
+            logger.warning(last_error)
+        except Exception as exc:
+            last_error = f"Unexpected error for {groq_model}: {exc}"
+            logger.error(last_error)
+
     token = _hf_token()
     if not token:
         return {
             "response": "",
             "model": "none",
             "tokens": None,
-            "error": "HF_TOKEN is not set",
+            "error": last_error or "Neither GROQ_API_KEY nor HF_TOKEN is set",
         }
 
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
     }
-
-    last_error = ""
 
     for model_id in _router_models():
         payload = {
@@ -171,8 +234,8 @@ def query_llm(
     return {
         "response": (
             "⚠️ The language model could not be reached. "
-            "Verify **HF_TOKEN** is valid and allowed for Inference Providers, "
-            "or set **HF_CHAT_MODELS** to a model you can run. "
+            "Verify **GROQ_API_KEY** is valid, or verify **HF_TOKEN** is valid "
+            "and allowed for Inference Providers. "
             "See https://huggingface.co/docs/inference-providers/en/index"
         ),
         "model": "none",

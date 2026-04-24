@@ -27,7 +27,7 @@ The system manually implements chunking, embedding, vector indexing, hybrid retr
 - FAISS `IndexFlatIP` vector store for exact cosine-style retrieval
 - Hybrid retrieval (`alpha * semantic + (1 - alpha) * keyword`) with UI controls
 - Prompt iteration framework with strict citation requirement
-- Hugging Face Inference API integration with fallback model support
+- Groq chat completions integration (preferred) with Hugging Face fallback support
 - Transparent logging (`logs/pipeline_<date>.log` and `logs/query_log.jsonl`)
 - Persistent feedback loop (`+/-` chunk score adjustments from user votes)
 
@@ -71,7 +71,8 @@ ai_10022300168/
 
 - Python 3.10 or newer
 - Internet access for first-time model/data download
-- A Hugging Face token from [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+- A Groq API key from [console.groq.com/keys](https://console.groq.com/keys) (recommended)
+- Optional fallback: a Hugging Face token from [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
 
 ### Setup
 
@@ -87,9 +88,10 @@ python -m venv venv
 # Install dependencies
 pip install -r requirements.txt
 
-# Create local env file and set token
+# Create local env file and set API key
 Copy-Item .env.example .env
-# Edit .env and set: HF_TOKEN=hf_your_actual_token
+# Edit .env and set: GROQ_API_KEY=gsk_your_actual_key
+# Optional fallback: set HF_TOKEN=hf_your_actual_token
 
 # Run app
 streamlit run app.py
@@ -108,7 +110,8 @@ python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-# Edit .env and set HF_TOKEN
+# Edit .env and set GROQ_API_KEY
+# Optional fallback: set HF_TOKEN
 streamlit run app.py
 ```
 

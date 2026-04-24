@@ -19,6 +19,7 @@ Author : Michael Nana Kwame Osei-Dei  (10022300168)
 """
 
 import logging
+import os
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
@@ -33,6 +34,17 @@ class Embedder:
     """Thin wrapper around SentenceTransformer with L2-normalisation."""
 
     def __init__(self, model_name: str = MODEL_NAME):
+        # On some Windows + Streamlit combinations, tqdm status rendering to
+        # redirected stderr can raise OSError(22) while loading transformer weights.
+        os.environ.setdefault("TQDM_DISABLE", "1")
+        try:
+            from transformers.utils import logging as hf_logging
+
+            hf_logging.disable_progress_bar()
+        except Exception:
+            # Safe fallback: model load can proceed without this hook.
+            pass
+
         logger.info("Loading sentence-transformer model: %s", model_name)
         # Downloads model to ~/.cache/torch/sentence_transformers on first run
         self.model      = SentenceTransformer(model_name)
@@ -64,7 +76,8 @@ class Embedder:
         if not texts:
             return np.empty((0, self.dim), dtype=np.float32)
 
-        show_progress = len(texts) > 200   # only show bar for large batches
+        # Keep progress bars disabled in app runtime to avoid stderr/tqdm issues.
+        show_progress = False
         logger.info(
             "Embedding %d texts (batch=%d, normalise=%s)…",
             len(texts), batch_size, normalise,

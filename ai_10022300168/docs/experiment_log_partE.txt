@@ -6,7 +6,7 @@ Student: Michael Nana Kwame Osei-Dei  |  Index: 10022300168
 
 INSTRUCTIONS TO STUDENT:
   Run EACH query twice:
-    Run A – With RAG (the full The Acity Oracle pipeline, HF_TOKEN set)
+    Run A – With RAG (the full The Acity Oracle pipeline, GROQ_API_KEY set)
     Run B – Pure LLM (comment out the retrieval stage in pipeline.py so the
              prompt contains only the system instruction + the bare query,
              OR use the LLM API directly with no context injected)
